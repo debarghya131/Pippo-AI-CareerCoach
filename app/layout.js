@@ -9,8 +9,8 @@ import { dark } from "@clerk/themes";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "AI Career Coach",
-  description: "",
+  title: "PippoAI",
+  description: "PippoAI is your AI career coach for resumes, cover letters, and interview prep.",
 };
 
 export default function RootLayout({ children }) {
