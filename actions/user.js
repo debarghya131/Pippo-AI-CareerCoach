@@ -30,7 +30,7 @@ export async function updateUser(data) {
         if (!industryInsight) {
           const insights = await generateAIInsights(data.industry);
 
-          industryInsight = await db.industryInsight.create({
+          industryInsight = await tx.industryInsight.create({
             data: {
               industry: data.industry,
               ...insights,
@@ -60,9 +60,15 @@ export async function updateUser(data) {
     );
 
     revalidatePath("/");
-    return result.user;
+    revalidatePath("/dashboard");
+    revalidatePath("/onboarding");
+    return {
+      success: true,
+      user: result.updatedUser,
+      industryInsight: result.industryInsight,
+    };
   } catch (error) {
-    console.error("Error updating user and industry:", error.message);
+    console.error("Error updating user and industry:", error);
     throw new Error("Failed to update profile");
   }
 }
@@ -93,5 +99,29 @@ export async function getUserOnboardingStatus() {
   } catch (error) {
     console.error("Error checking onboarding status:", error);
     throw new Error("Failed to check onboarding status");
+  }
+}
+
+export async function getCurrentUserProfile() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+      select: {
+        industry: true,
+        experience: true,
+        bio: true,
+        skills: true,
+      },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    return user;
+  } catch (error) {
+    console.error("Error fetching current user profile:", error);
+    throw new Error("Failed to fetch current user profile");
   }
 }

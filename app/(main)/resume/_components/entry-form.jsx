@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, parse } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,8 +23,15 @@ import useFetch from "@/hooks/use-fetch";
 
 const formatDisplayDate = (dateString) => {
   if (!dateString) return "";
-  const date = parse(dateString, "yyyy-MM", new Date());
-  return format(date, "MMM yyyy");
+
+  const parsedDate = parse(dateString, "yyyy-MM", new Date());
+  if (isValid(parsedDate)) {
+    return format(parsedDate, "MMM yyyy");
+  }
+
+  // If the value is already formatted or otherwise invalid, return it unchanged
+  // instead of crashing the form submission.
+  return dateString;
 };
 
 export function EntryForm({ type, entries, onChange }) {

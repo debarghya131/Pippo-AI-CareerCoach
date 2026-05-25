@@ -30,9 +30,20 @@ import useFetch from "@/hooks/use-fetch";
 import { onboardingSchema } from "@/app/lib/schema";
 import { updateUser } from "@/actions/user";
 
-const OnboardingForm = ({ industries }) => {
+const emptyValues = {
+  industry: "",
+  subIndustry: "",
+  experience: "",
+  skills: "",
+  bio: "",
+};
+
+const OnboardingForm = ({ industries, initialValues = null, isEditing = false }) => {
   const router = useRouter();
-  const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [selectedIndustry, setSelectedIndustry] = useState(() => {
+    if (!initialValues?.industry) return null;
+    return industries.find((industry) => industry.id === initialValues.industry) || null;
+  });
 
   const {
     loading: updateLoading,
@@ -48,6 +59,7 @@ const OnboardingForm = ({ industries }) => {
     watch,
   } = useForm({
     resolver: zodResolver(onboardingSchema),
+    defaultValues: initialValues || emptyValues,
   });
 
   const onSubmit = async (values) => {
@@ -67,24 +79,39 @@ const OnboardingForm = ({ industries }) => {
 
   useEffect(() => {
     if (updateResult?.success && !updateLoading) {
-      toast.success("Profile completed successfully!");
+      toast.success(
+        isEditing ? "Profile updated successfully!" : "Profile completed successfully!"
+      );
       router.push("/dashboard");
       router.refresh();
     }
-  }, [updateResult, updateLoading]);
+  }, [updateResult, updateLoading, isEditing, router]);
 
   const watchIndustry = watch("industry");
+  const watchSubIndustry = watch("subIndustry");
+
+  useEffect(() => {
+    if (!watchIndustry) {
+      setSelectedIndustry(null);
+      return;
+    }
+
+    setSelectedIndustry(
+      industries.find((industry) => industry.id === watchIndustry) || null
+    );
+  }, [watchIndustry, industries]);
 
   return (
     <div className="flex items-center justify-center bg-background">
       <Card className="w-full max-w-lg mt-10 mx-2">
         <CardHeader>
           <CardTitle className="gradient-title text-4xl">
-            Complete Your Profile
+            {isEditing ? "Edit Your Profile" : "Complete Your Profile"}
           </CardTitle>
           <CardDescription>
-            Select your industry to get personalized career insights and
-            recommendations.
+            {isEditing
+              ? "Update your profile details to refresh your personalized career insights."
+              : "Select your industry to get personalized career insights and recommendations."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -92,11 +119,9 @@ const OnboardingForm = ({ industries }) => {
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
               <Select
+                value={watchIndustry || undefined}
                 onValueChange={(value) => {
                   setValue("industry", value);
-                  setSelectedIndustry(
-                    industries.find((ind) => ind.id === value)
-                  );
                   setValue("subIndustry", "");
                 }}
               >
@@ -125,6 +150,7 @@ const OnboardingForm = ({ industries }) => {
               <div className="space-y-2">
                 <Label htmlFor="subIndustry">Specialization</Label>
                 <Select
+                  value={watchSubIndustry || undefined}
                   onValueChange={(value) => setValue("subIndustry", value)}
                 >
                   <SelectTrigger id="subIndustry">
@@ -198,11 +224,20 @@ const OnboardingForm = ({ industries }) => {
               {updateLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  {isEditing ? "Updating..." : "Saving..."}
                 </>
               ) : (
-                "Complete Profile"
+                isEditing ? "Update Profile" : "Complete Profile"
               )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push(isEditing ? "/dashboard" : "/")}
+              disabled={updateLoading}
+            >
+              Cancel
             </Button>
           </form>
         </CardContent>
