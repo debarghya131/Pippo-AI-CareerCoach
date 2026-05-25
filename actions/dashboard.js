@@ -5,7 +5,60 @@ import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+const buildFallbackInsights = (industry) => ({
+  salaryRanges: [
+    {
+      role: `${industry} Specialist`,
+      min: 60000,
+      max: 120000,
+      median: 90000,
+      location: "Global",
+    },
+  ],
+  growthRate: 12,
+  demandLevel: "Medium",
+  topSkills: ["Communication", "Problem Solving", "Adaptability"],
+  marketOutlook: "Positive",
+  keyTrends: ["AI adoption", "Automation", "Remote collaboration"],
+  recommendedSkills: ["Domain expertise", "Analytics", "Digital tools"],
+});
+
+const normalizeInsights = (industry, raw) => {
+  const fallback = buildFallbackInsights(industry);
+
+  return {
+    salaryRanges:
+      Array.isArray(raw?.salaryRanges) && raw.salaryRanges.length
+        ? raw.salaryRanges
+        : fallback.salaryRanges,
+    growthRate:
+      typeof raw?.growthRate === "number"
+        ? raw.growthRate
+        : Number.parseFloat(raw?.growthRate) || fallback.growthRate,
+    demandLevel:
+      typeof raw?.demandLevel === "string"
+        ? raw.demandLevel
+        : fallback.demandLevel,
+    topSkills:
+      Array.isArray(raw?.topSkills) && raw.topSkills.length
+        ? raw.topSkills
+        : fallback.topSkills,
+    marketOutlook:
+      typeof raw?.marketOutlook === "string"
+        ? raw.marketOutlook
+        : fallback.marketOutlook,
+    keyTrends:
+      Array.isArray(raw?.keyTrends) && raw.keyTrends.length
+        ? raw.keyTrends
+        : fallback.keyTrends,
+    recommendedSkills:
+      Array.isArray(raw?.recommendedSkills) && raw.recommendedSkills.length
+        ? raw.recommendedSkills
+        : fallback.recommendedSkills,
+  };
+};
 
 export const generateAIInsights = async (industry) => {
   const prompt = `
@@ -28,12 +81,17 @@ export const generateAIInsights = async (industry) => {
           Include at least 5 skills and trends.
         `;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text();
-  const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
-  return JSON.parse(cleanedText);
+    return normalizeInsights(industry, JSON.parse(cleanedText));
+  } catch (error) {
+    console.error("Failed to generate AI insights:", error);
+    return buildFallbackInsights(industry);
+  }
 };
 
 export async function getIndustryInsights() {

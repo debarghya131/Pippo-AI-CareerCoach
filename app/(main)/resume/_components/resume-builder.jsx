@@ -120,7 +120,47 @@ export default function ResumeBuilder({ initialContent }) {
         margin: [15, 15],
         filename: "resume.pdf",
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          onclone: (clonedDoc) => {
+            const root = clonedDoc.documentElement;
+            const body = clonedDoc.body;
+            const resumeNode = clonedDoc.getElementById("resume-pdf");
+
+            const colorOverrides = {
+              "--background": "#ffffff",
+              "--foreground": "#111111",
+              "--card": "#ffffff",
+              "--card-foreground": "#111111",
+              "--popover": "#ffffff",
+              "--popover-foreground": "#111111",
+              "--primary": "#111111",
+              "--primary-foreground": "#ffffff",
+              "--secondary": "#f3f4f6",
+              "--secondary-foreground": "#111111",
+              "--muted": "#f3f4f6",
+              "--muted-foreground": "#4b5563",
+              "--accent": "#f3f4f6",
+              "--accent-foreground": "#111111",
+              "--border": "#d1d5db",
+              "--input": "#d1d5db",
+              "--ring": "#9ca3af",
+            };
+
+            Object.entries(colorOverrides).forEach(([key, value]) => {
+              root.style.setProperty(key, value);
+            });
+
+            body.style.background = "#ffffff";
+            body.style.color = "#111111";
+
+            if (resumeNode) {
+              resumeNode.style.background = "#ffffff";
+              resumeNode.style.color = "#111111";
+            }
+          },
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       };
 
