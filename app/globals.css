@@ -174,3 +174,57 @@
   height: 100%;
   background: radial-gradient(circle, transparent, rgba(0, 0, 0, 0.9));
 }
+
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .hero-image {
+    transform: rotateX(8deg) scale(1);
+  }
+
+  .hero-image.scrolled {
+    transform: rotateX(0deg) scale(1) translateY(16px);
+  }
+
+  .grid-background {
+    background-size: 36px 36px;
+  }
+
+  .resume-markdown-shell .w-md-editor-toolbar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .resume-markdown-shell .w-md-editor-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .resume-markdown-shell .w-md-editor-text-pre,
+  .resume-markdown-shell .w-md-editor-text-input,
+  .resume-markdown-shell .w-md-editor-preview {
+    font-size: 14px;
+  }
+
+  .resume-markdown-shell .wmde-markdown,
+  .resume-markdown-shell .wmde-markdown-var {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .resume-markdown-shell .w-md-editor-preview {
+    padding: 12px;
+  }
+
+  .cover-letter-preview-shell .w-md-editor-preview {
+    padding: 12px;
+  }
+
+  .cover-letter-preview-shell .wmde-markdown,
+  .cover-letter-preview-shell .wmde-markdown-var {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+}

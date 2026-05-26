@@ -25,7 +25,7 @@ const MainLayout = async ({ children }) => {
           <div className="flex gap-2">
             {!userId ? (
               <SignInButton
-                mode="modal"
+                mode="redirect"
                 forceRedirectUrl="/demo/exit?next=/dashboard"
               >
                 <Button>Sign In For Full Access</Button>

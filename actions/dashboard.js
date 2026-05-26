@@ -4,6 +4,7 @@ import { db } from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { demoIndustryInsights } from "@/lib/demo-data";
 import { getViewerContext } from "@/lib/demo-server";
+import { AI_RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -78,7 +79,7 @@ const normalizeInsights = (industry, raw) => {
   };
 };
 
-export const generateAIInsights = async (industry) => {
+export const generateAIInsights = async (industry, subject = null) => {
   const prompt = `
           Analyze the current state of the ${industry} industry and provide insights in ONLY the following JSON format without any additional notes or explanations:
           {
@@ -97,16 +98,26 @@ export const generateAIInsights = async (industry) => {
           Include at least 5 common roles for salary ranges.
           Growth rate should be a percentage.
           Include at least 5 skills and trends.
-        `;
+  `;
 
   try {
+    if (subject) {
+      await enforceRateLimit({
+        ...AI_RATE_LIMITS.industryInsightGenerate,
+        subject,
+      });
+    }
+
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
     return normalizeInsights(industry, extractJsonObject(text));
   } catch (error) {
-    console.error("Failed to generate AI insights:", error);
+    if (error?.name !== "RateLimitError") {
+      console.error("Failed to generate AI insights:", error);
+    }
+
     return buildFallbackInsights(industry);
   }
 };
@@ -131,7 +142,7 @@ export async function getIndustryInsights() {
 
   // If no insights exist, generate them
   if (!user.industryInsight) {
-    const insights = await generateAIInsights(user.industry);
+    const insights = await generateAIInsights(user.industry, userId);
 
     const industryInsight = await db.industryInsight.create({
       data: {

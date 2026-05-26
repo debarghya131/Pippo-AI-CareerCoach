@@ -11,9 +11,9 @@ export default async function InterviewPrepPage() {
   ]);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-6xl font-bold gradient-title">
+    <div className="px-0">
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-4xl font-bold gradient-title sm:text-5xl lg:text-6xl">
           Interview Preparation
         </h1>
       </div>

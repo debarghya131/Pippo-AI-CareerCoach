@@ -57,16 +57,16 @@ export default function CoverLetterList({ coverLetters, isDemoMode = false }) {
       {coverLetters.map((letter) => (
         <Card key={letter.id} className="group relative ">
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-xl gradient-title">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <CardTitle className="text-lg gradient-title sm:text-xl">
                   {letter.jobTitle} at {letter.companyName}
                 </CardTitle>
                 <CardDescription>
                   Created {format(new Date(letter.createdAt), "PPP")}
                 </CardDescription>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
                 <Button
                   variant="outline"
                   size="icon"
@@ -117,7 +117,7 @@ export default function CoverLetterList({ coverLetters, isDemoMode = false }) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-muted-foreground text-sm line-clamp-3">
+            <div className="line-clamp-3 text-sm text-muted-foreground">
               {letter.jobDescription}
             </div>
           </CardContent>

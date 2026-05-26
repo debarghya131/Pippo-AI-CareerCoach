@@ -28,7 +28,7 @@ export async function updateUser(data) {
 
         // If industry doesn't exist, create it with default values
         if (!industryInsight) {
-          const insights = await generateAIInsights(data.industry);
+          const insights = await generateAIInsights(data.industry, userId);
 
           industryInsight = await tx.industryInsight.create({
             data: {

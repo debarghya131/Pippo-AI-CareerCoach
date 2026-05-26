@@ -156,7 +156,7 @@ export function EntryForm({ type, entries, onChange }) {
       <div className="space-y-4">
         {entries.map((item, index) => (
           <Card key={index} className="border border-border/60 bg-background/80">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-col gap-3 space-y-0 pb-2 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-sm font-medium leading-relaxed">
                 {item.title} @ {item.organization}
               </CardTitle>
@@ -327,7 +327,7 @@ export function EntryForm({ type, entries, onChange }) {
                 </>
               )}
             </Button>
-            <div className="flex items-center justify-end gap-2">
+            <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
@@ -335,10 +335,11 @@ export function EntryForm({ type, entries, onChange }) {
                   reset();
                   setIsAdding(false);
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button type="button" onClick={handleAdd}>
+              <Button type="button" onClick={handleAdd} className="w-full sm:w-auto">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Entry
               </Button>

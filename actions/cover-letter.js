@@ -4,6 +4,7 @@ import { db } from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { demoCoverLetters } from "@/lib/demo-data";
 import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
+import { AI_RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -44,6 +45,11 @@ export async function generateCoverLetter(data) {
   `;
 
   try {
+    await enforceRateLimit({
+      ...AI_RATE_LIMITS.coverLetterGenerate,
+      subject: userId,
+    });
+
     const result = await model.generateContent(prompt);
     const content = result.response.text().trim();
 
@@ -60,6 +66,10 @@ export async function generateCoverLetter(data) {
 
     return coverLetter;
   } catch (error) {
+    if (error?.name === "RateLimitError") {
+      throw error;
+    }
+
     console.error("Error generating cover letter:", error.message);
     throw new Error("Failed to generate cover letter");
   }
