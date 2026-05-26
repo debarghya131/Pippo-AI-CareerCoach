@@ -35,22 +35,22 @@ export default async function LandingPage() {
       />
 
       {/* Features Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
+      <section className="w-full bg-background py-10 sm:py-12 md:py-24 lg:py-32">
         <div className="container mx-auto px-4 md:px-6">
-          <h2 className="text-3xl font-bold tracking-tighter text-center mb-12">
+          <h2 className="mx-auto mb-10 max-w-xl text-center text-2xl font-bold tracking-tighter sm:mb-12 sm:text-3xl">
             Powerful Features for Your Career Growth
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className="border-2 hover:border-primary transition-colors duration-300"
+                className="border-2 transition-colors duration-300 hover:border-primary"
               >
-                <CardContent className="pt-6 text-center flex flex-col items-center">
+                <CardContent className="flex flex-col items-center px-5 pt-6 text-center sm:px-6">
                   <div className="flex flex-col items-center justify-center">
                     {feature.icon}
-                    <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="mb-2 text-lg font-bold sm:text-xl">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground sm:text-base">
                       {feature.description}
                     </p>
                   </div>
@@ -62,93 +62,93 @@ export default async function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="w-full py-12 md:py-24 bg-muted/50">
+      <section className="w-full bg-muted/50 py-10 sm:py-12 md:py-24">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
+          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-6 text-center md:grid-cols-4 md:gap-8">
             <div className="flex flex-col items-center justify-center space-y-2">
-              <h3 className="text-4xl font-bold">50+</h3>
-              <p className="text-muted-foreground">Industries Covered</p>
+              <h3 className="text-3xl font-bold sm:text-4xl">50+</h3>
+              <p className="text-sm text-muted-foreground sm:text-base">Industries Covered</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2">
-              <h3 className="text-4xl font-bold">1000+</h3>
-              <p className="text-muted-foreground">Interview Questions</p>
+              <h3 className="text-3xl font-bold sm:text-4xl">1000+</h3>
+              <p className="text-sm text-muted-foreground sm:text-base">Interview Questions</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2">
-              <h3 className="text-4xl font-bold">95%</h3>
-              <p className="text-muted-foreground">Success Rate</p>
+              <h3 className="text-3xl font-bold sm:text-4xl">95%</h3>
+              <p className="text-sm text-muted-foreground sm:text-base">Success Rate</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2">
-              <h3 className="text-4xl font-bold">24/7</h3>
-              <p className="text-muted-foreground">AI Support</p>
+              <h3 className="text-3xl font-bold sm:text-4xl">24/7</h3>
+              <p className="text-sm text-muted-foreground sm:text-base">AI Support</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="w-full py-12 md:py-24 bg-background">
+      <section className="w-full bg-background py-10 sm:py-12 md:py-24">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-            <p className="text-muted-foreground">
+          <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
+            <h2 className="mb-4 text-2xl font-bold sm:text-3xl">How It Works</h2>
+            <p className="text-sm text-muted-foreground sm:text-base">
               Four simple steps to accelerate your career growth
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
             {howItWorks.map((item, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center text-center space-y-4"
+                className="flex flex-col items-center space-y-4 rounded-2xl border border-border/50 bg-muted/20 px-5 py-6 text-center md:border-none md:bg-transparent md:px-0 md:py-0"
               >
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                   {item.icon}
                 </div>
-                <h3 className="font-semibold text-xl">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
+                <h3 className="text-lg font-semibold sm:text-xl">{item.title}</h3>
+                <p className="text-sm text-muted-foreground sm:text-base">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="w-full py-12 md:py-24 bg-muted/50">
+      <section className="w-full bg-muted/50 py-10 sm:py-12 md:py-24">
         <div className="container mx-auto px-4 md:px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="mb-12 text-center text-2xl font-bold sm:text-3xl">
             What Our Users Say
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-3 md:gap-8">
             {testimonial.map((testimonial, index) => (
               <Card key={index} className="bg-background">
                 <CardContent className="pt-6">
                   <div className="flex flex-col space-y-4">
-                    <div className="flex items-center space-x-4 mb-4">
+                    <div className="mb-4 flex items-center space-x-3 sm:space-x-4">
                       <div className="relative h-12 w-12 flex-shrink-0">
                         <Image
                           width={40}
                           height={40}
                           src={testimonial.image}
                           alt={testimonial.author}
-                          className="rounded-full object-cover border-2 border-primary/20"
+                          className="rounded-full border-2 border-primary/20 object-cover"
                         />
                       </div>
-                      <div>
-                        <p className="font-semibold">{testimonial.author}</p>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{testimonial.author}</p>
                         <p className="text-sm text-muted-foreground">
                           {testimonial.role}
                         </p>
-                        <p className="text-sm text-primary">
+                        <p className="truncate text-sm text-primary">
                           {testimonial.company}
                         </p>
                       </div>
                     </div>
                     <blockquote>
-                      <p className="text-muted-foreground italic relative">
-                        <span className="text-3xl text-primary absolute -top-4 -left-2">
+                      <p className="relative pr-3 text-sm italic text-muted-foreground sm:text-base">
+                        <span className="absolute -left-2 -top-4 text-3xl text-primary">
                           &quot;
                         </span>
                         {testimonial.quote}
-                        <span className="text-3xl text-primary absolute -bottom-4">
+                        <span className="absolute bottom-0 right-0 hidden text-3xl text-primary sm:inline">
                           &quot;
                         </span>
                       </p>
@@ -162,13 +162,13 @@ export default async function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="w-full py-12 md:py-24">
+      <section className="w-full py-10 sm:py-12 md:py-24">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold mb-4">
+          <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
+            <h2 className="mb-4 text-2xl font-bold sm:text-3xl">
               Frequently Asked Questions
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground sm:text-base">
               Find answers to common questions about our platform
             </p>
           </div>
@@ -177,10 +177,12 @@ export default async function LandingPage() {
             <Accordion type="single" collapsible className="w-full">
               {faqs.map((faq, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="text-left">
+                  <AccordionTrigger className="text-left text-sm leading-6 sm:text-base">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent>{faq.answer}</AccordionContent>
+                  <AccordionContent className="text-sm leading-6 text-muted-foreground sm:text-base">
+                    {faq.answer}
+                  </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
@@ -190,8 +192,8 @@ export default async function LandingPage() {
 
       {/* CTA Section */}
       <section className="w-full">
-        <div className="mx-auto py-24 gradient rounded-lg">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center max-w-3xl mx-auto">
+        <div className="mx-auto rounded-lg gradient px-4 py-16 sm:px-6 md:py-24">
+          <div className="mx-auto flex max-w-3xl flex-col items-center justify-center space-y-4 text-center">
             <h2 className="text-3xl font-bold tracking-tighter text-primary-foreground sm:text-4xl md:text-5xl">
               Ready to Accelerate Your Career?
             </h2>
@@ -204,7 +206,7 @@ export default async function LandingPage() {
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="h-11 mt-5 animate-bounce"
+                  className="mt-5 h-11 w-full animate-bounce sm:w-auto"
                 >
                   Start Your Journey Today{" "}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -215,7 +217,7 @@ export default async function LandingPage() {
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="h-11 mt-5 animate-bounce"
+                  className="mt-5 h-11 w-full animate-bounce sm:w-auto"
                 >
                   Start Your Journey Today{" "}
                   <ArrowRight className="ml-2 h-4 w-4" />

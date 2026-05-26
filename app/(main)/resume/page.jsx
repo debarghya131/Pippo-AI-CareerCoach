@@ -7,7 +7,7 @@ export default async function ResumePage() {
   const [resume, demoMode] = await Promise.all([getResume(), isDemoMode()]);
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-0">
       <ResumeBuilder
         initialContent={resume?.content}
         isDemoMode={demoMode}

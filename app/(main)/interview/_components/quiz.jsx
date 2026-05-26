@@ -90,7 +90,7 @@ export default function Quiz({ isDemoMode = false }) {
   // Show results if quiz is completed
   if (resultData) {
     return (
-      <div className="mx-2">
+      <div className="mx-0 sm:mx-2">
         <QuizResult result={resultData} onStartNew={startNewQuiz} />
       </div>
     );
@@ -98,7 +98,7 @@ export default function Quiz({ isDemoMode = false }) {
 
   if (!quizData) {
     return (
-      <Card className="mx-2">
+      <Card className="mx-0 sm:mx-2">
         <CardHeader>
           <CardTitle>Ready to test your knowledge?</CardTitle>
         </CardHeader>
@@ -133,7 +133,7 @@ export default function Quiz({ isDemoMode = false }) {
   const question = quizData[currentQuestion];
 
   return (
-    <Card className="mx-2">
+    <Card className="mx-0 sm:mx-2">
       <CardHeader>
         <CardTitle>
           Question {currentQuestion + 1} of {quizData.length}
@@ -147,9 +147,14 @@ export default function Quiz({ isDemoMode = false }) {
           className="space-y-2"
         >
           {question.options.map((option, index) => (
-            <div key={index} className="flex items-center space-x-2">
+            <div
+              key={index}
+              className="flex items-start space-x-2 rounded-lg border border-border/60 px-3 py-3"
+            >
               <RadioGroupItem value={option} id={`option-${index}`} />
-              <Label htmlFor={`option-${index}`}>{option}</Label>
+              <Label htmlFor={`option-${index}`} className="leading-6">
+                {option}
+              </Label>
             </div>
           ))}
         </RadioGroup>
@@ -161,12 +166,13 @@ export default function Quiz({ isDemoMode = false }) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
         {!showExplanation && (
           <Button
             onClick={() => setShowExplanation(true)}
             variant="outline"
             disabled={!answers[currentQuestion]}
+            className="w-full sm:w-auto"
           >
             Show Explanation
           </Button>
@@ -174,7 +180,7 @@ export default function Quiz({ isDemoMode = false }) {
         <Button
           onClick={handleNext}
           disabled={!answers[currentQuestion] || savingResult}
-          className="ml-auto"
+          className="w-full sm:ml-auto sm:w-auto"
         >
           {savingResult && (
             <BarLoader className="mt-4" width={"100%"} color="gray" />

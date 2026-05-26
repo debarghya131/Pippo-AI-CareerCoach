@@ -87,8 +87,7 @@ export default function CoverLetterGenerator({ isDemoMode = false }) {
             </div>
           )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Form fields remain the same */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
@@ -126,7 +125,7 @@ export default function CoverLetterGenerator({ isDemoMode = false }) {
                 id="jobDescription"
                 disabled={isDemoMode}
                 placeholder="Paste the job description here"
-                className="h-32"
+                className="h-32 sm:h-40"
                 {...register("jobDescription")}
               />
               {errors.jobDescription && (
@@ -140,6 +139,7 @@ export default function CoverLetterGenerator({ isDemoMode = false }) {
               <Button
                 type={isDemoMode ? "button" : "submit"}
                 disabled={generating && !isDemoMode}
+                className="w-full sm:w-auto"
                 onClick={
                   isDemoMode ? () => toast.error(DEMO_READONLY_MESSAGE) : undefined
                 }

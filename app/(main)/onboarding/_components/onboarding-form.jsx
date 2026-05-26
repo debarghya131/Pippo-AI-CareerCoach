@@ -116,13 +116,13 @@ const OnboardingForm = ({
   }, [watchIndustry, industries]);
 
   return (
-    <div className="flex items-center justify-center bg-background">
-      <Card className="w-full max-w-lg mt-10 mx-2">
+    <div className="flex items-center justify-center bg-background px-4 sm:px-0">
+      <Card className="mx-0 mt-6 w-full max-w-lg sm:mx-2 sm:mt-10">
         <CardHeader>
-          <CardTitle className="gradient-title text-4xl">
+          <CardTitle className="gradient-title text-3xl sm:text-4xl">
             {isEditing ? "Edit Your Profile" : "Complete Your Profile"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             {isDemoMode
               ? "This demo profile is prefilled for exploration. Sign in to update anything."
               : isEditing

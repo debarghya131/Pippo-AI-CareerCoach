@@ -64,6 +64,7 @@ export default function ResumeBuilder({
   const hasFormDraftFromStoredResume = hasStoredResume && isUsingFormDraft;
   const { user } = useUser();
   const [resumeMode, setResumeMode] = useState("preview");
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
 
   const {
     control,
@@ -144,6 +145,18 @@ export default function ResumeBuilder({
       setResumeMode("preview");
     }
   }, [isDemoMode]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const updateLayout = (event) => {
+      setIsMobileLayout(event.matches);
+    };
+
+    setIsMobileLayout(mediaQuery.matches);
+    mediaQuery.addEventListener("change", updateLayout);
+
+    return () => mediaQuery.removeEventListener("change", updateLayout);
+  }, []);
 
   // Update preview content when form values change
   useEffect(() => {
@@ -320,14 +333,19 @@ export default function ResumeBuilder({
   };
 
   return (
-    <div data-color-mode="light" className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-        <h1 className="font-bold gradient-title text-5xl md:text-6xl">
+    <div data-color-mode="light" className="space-y-4 sm:space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <h1 className="font-bold gradient-title text-4xl sm:text-5xl md:text-6xl">
           Resume Builder
         </h1>
-        <div className="space-x-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           {hasFormDraftFromStoredResume && !isDemoMode && (
-            <Button type="button" variant="outline" onClick={cancelFormDraft}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cancelFormDraft}
+              className="w-full sm:w-auto"
+            >
               Cancel Draft
             </Button>
           )}
@@ -335,6 +353,7 @@ export default function ResumeBuilder({
             variant="destructive"
             onClick={handleSaveClick}
             disabled={isSaving}
+            className="w-full sm:w-auto"
           >
             {isSaving && !isDemoMode ? (
               <>
@@ -348,7 +367,11 @@ export default function ResumeBuilder({
               </>
             )}
           </Button>
-          <Button onClick={generatePDF} disabled={isGenerating && !isDemoMode}>
+          <Button
+            onClick={generatePDF}
+            disabled={isGenerating && !isDemoMode}
+            className="w-full sm:w-auto"
+          >
             {isGenerating && !isDemoMode ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -372,7 +395,7 @@ export default function ResumeBuilder({
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="grid w-full max-w-xs grid-cols-2">
           <TabsTrigger
             value="edit"
             disabled={isDemoMode || (hasStoredResume && !isUsingFormDraft)}
@@ -384,7 +407,7 @@ export default function ResumeBuilder({
 
         <TabsContent value="edit">
           {hasFormDraftFromStoredResume && (
-            <div className="mb-4 flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="mb-4 flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4">
               <div>
                 <p className="font-medium">New form draft in progress</p>
                 <p className="text-sm text-muted-foreground">
@@ -395,7 +418,7 @@ export default function ResumeBuilder({
             </div>
           )}
           <form onSubmit={handleSubmit(saveFormContent)} className="space-y-6">
-            <fieldset disabled={isDemoMode} className="space-y-8">
+            <fieldset disabled={isDemoMode} className="space-y-6 sm:space-y-8">
               <Card className="border border-border/60 bg-muted/20">
                 <CardHeader>
                   <CardTitle>Resume Structure</CardTitle>
@@ -641,7 +664,7 @@ export default function ResumeBuilder({
 
         <TabsContent value="preview">
           {hasStoredResume && !isDemoMode && !isUsingFormDraft && (
-            <div className="mb-3 flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="mb-3 flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4">
               <div>
                 <p className="font-medium">Editing an existing resume</p>
                 <p className="text-sm text-muted-foreground">
@@ -649,7 +672,12 @@ export default function ResumeBuilder({
                   not import your saved markdown automatically.
                 </p>
               </div>
-              <Button type="button" variant="outline" onClick={startFormDraft}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startFormDraft}
+                className="w-full sm:w-auto"
+              >
                 Start Fresh Form Draft
               </Button>
             </div>
@@ -658,7 +686,7 @@ export default function ResumeBuilder({
             <Button
               variant="link"
               type="button"
-              className="mb-2"
+              className="mb-2 h-auto justify-start px-0 text-left"
               onClick={() =>
                 setResumeMode(resumeMode === "preview" ? "edit" : "preview")
               }
@@ -678,18 +706,19 @@ export default function ResumeBuilder({
           )}
 
           {activeTab === "preview" && !isDemoMode && resumeMode !== "preview" && (
-            <div className="flex p-3 gap-2 items-center border-2 border-yellow-600 text-yellow-600 rounded mb-2">
+            <div className="mb-2 flex items-start gap-2 rounded border-2 border-yellow-600 p-3 text-yellow-600">
               <AlertTriangle className="h-5 w-5" />
               <span className="text-sm">
                 You will lose editied markdown if you update the form data.
               </span>
             </div>
           )}
-          <div className="border rounded-lg">
+          <div className="resume-markdown-shell overflow-hidden rounded-lg border">
             <MDEditor
+              className="resume-markdown-editor"
               value={previewContent}
               onChange={isDemoMode ? undefined : setPreviewContent}
-              height={800}
+              height={isMobileLayout ? 560 : 800}
               preview={isDemoMode ? "preview" : resumeMode}
               hideToolbar={isDemoMode}
             />

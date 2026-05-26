@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -19,6 +20,18 @@ import {
 import { format } from "date-fns";
 
 export default function PerformanceChart({ assessments }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const updateView = (event) => setIsMobile(event.matches);
+
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener("change", updateView);
+
+    return () => mediaQuery.removeEventListener("change", updateView);
+  }, []);
+
   const chartData =
     assessments?.map((assessment, index) => ({
       id: assessment.id,
@@ -31,7 +44,7 @@ export default function PerformanceChart({ assessments }) {
   return (
     <Card className="border-white/10 bg-neutral-950 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
       <CardHeader className="pb-2">
-        <CardTitle className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+        <CardTitle className="text-2xl font-semibold tracking-tight text-white sm:text-3xl md:text-4xl">
           Performance Trend
         </CardTitle>
         <CardDescription className="text-sm text-neutral-400">
@@ -39,11 +52,16 @@ export default function PerformanceChart({ assessments }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[320px]">
+        <div className="h-[240px] sm:h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              margin={{ top: 18, right: 12, left: -20, bottom: 4 }}
+              margin={{
+                top: 18,
+                right: isMobile ? 4 : 12,
+                left: isMobile ? -32 : -20,
+                bottom: 4,
+              }}
             >
               <CartesianGrid
                 stroke="rgba(255,255,255,0.22)"
@@ -54,14 +72,15 @@ export default function PerformanceChart({ assessments }) {
                 dataKey="label"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "rgba(255,255,255,0.42)", fontSize: 12 }}
+                minTickGap={isMobile ? 32 : 16}
+                tick={{ fill: "rgba(255,255,255,0.42)", fontSize: isMobile ? 10 : 12 }}
               />
               <YAxis
                 domain={[0, 100]}
-                ticks={[0, 25, 50, 75, 100]}
+                ticks={isMobile ? [0, 50, 100] : [0, 25, 50, 75, 100]}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "rgba(255,255,255,0.42)", fontSize: 12 }}
+                tick={{ fill: "rgba(255,255,255,0.42)", fontSize: isMobile ? 10 : 12 }}
               />
               <Tooltip
                 cursor={{
@@ -88,15 +107,15 @@ export default function PerformanceChart({ assessments }) {
                 type="natural"
                 dataKey="score"
                 stroke="#f5f5f5"
-                strokeWidth={2.5}
+                strokeWidth={isMobile ? 2 : 2.5}
                 dot={{
-                  r: 4,
+                  r: isMobile ? 3 : 4,
                   fill: "#f5f5f5",
                   stroke: "rgba(255,255,255,0.12)",
                   strokeWidth: 2,
                 }}
                 activeDot={{
-                  r: 5,
+                  r: isMobile ? 4 : 5,
                   fill: "#ffffff",
                   stroke: "#ffffff",
                   strokeWidth: 2,
