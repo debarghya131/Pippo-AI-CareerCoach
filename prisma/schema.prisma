@@ -97,3 +97,12 @@ model IndustryInsight {
 
   @@index([industry])
 }
+
+model RateLimitEvent {
+  id        String   @id @default(cuid())
+  action    String
+  subject   String
+  createdAt DateTime @default(now())
+
+  @@index([action, subject, createdAt])
+}

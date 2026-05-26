@@ -164,6 +164,7 @@ export default async function Header() {
 
           {!userId && (
             <SignInButton
+              mode="redirect"
               {...(demoMode
                 ? { forceRedirectUrl: "/demo/exit?next=/dashboard" }
                 : {})}

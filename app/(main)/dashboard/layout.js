@@ -15,7 +15,7 @@ export default async function Layout({ children }) {
         {demoMode ? (
           !userId ? (
             <SignInButton
-              mode="modal"
+              mode="redirect"
               forceRedirectUrl="/demo/exit?next=/dashboard"
             >
               <Button variant="outline">Sign In to Edit</Button>

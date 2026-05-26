@@ -86,6 +86,38 @@ export default function ResumeBuilder({
   // Watch form fields for preview updates
   const formValues = watch();
 
+  const getContactMarkdown = useCallback((values) => {
+    const { contactInfo = {} } = values;
+    const parts = [];
+    if (contactInfo.email) parts.push(`📧 ${contactInfo.email}`);
+    if (contactInfo.mobile) parts.push(`📱 ${contactInfo.mobile}`);
+    if (contactInfo.linkedin)
+      parts.push(`💼 [LinkedIn](${contactInfo.linkedin})`);
+    if (contactInfo.twitter) parts.push(`🐦 [Twitter](${contactInfo.twitter})`);
+
+    const header = `## <div align="center">${
+      user?.fullName || viewerName || "PippoAI Demo User"
+    }</div>`;
+
+    return parts.length > 0
+      ? `${header}\n\n<div align="center">\n\n${parts.join(" | ")}\n\n</div>`
+      : header;
+  }, [user?.fullName, viewerName]);
+
+  const getCombinedContent = useCallback((values) => {
+    const { summary, skills, experience, education, projects } = values;
+    return [
+      getContactMarkdown(values),
+      summary && `## Professional Summary\n\n${summary}`,
+      skills && `## Skills\n\n${skills}`,
+      entriesToMarkdown(experience, "Work Experience"),
+      entriesToMarkdown(education, "Education"),
+      entriesToMarkdown(projects, "Projects"),
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }, [getContactMarkdown]);
+
   useEffect(() => {
     setSavedContent(initialContent || "");
   }, [initialContent]);
@@ -127,38 +159,6 @@ export default function ResumeBuilder({
       toast.success("Resume saved successfully!");
     }
   }, [saveResult, isSaving]);
-
-  const getContactMarkdown = useCallback((values) => {
-    const { contactInfo = {} } = values;
-    const parts = [];
-    if (contactInfo.email) parts.push(`📧 ${contactInfo.email}`);
-    if (contactInfo.mobile) parts.push(`📱 ${contactInfo.mobile}`);
-    if (contactInfo.linkedin)
-      parts.push(`💼 [LinkedIn](${contactInfo.linkedin})`);
-    if (contactInfo.twitter) parts.push(`🐦 [Twitter](${contactInfo.twitter})`);
-
-    const header = `## <div align="center">${
-      user?.fullName || viewerName || "PippoAI Demo User"
-    }</div>`;
-
-    return parts.length > 0
-      ? `${header}\n\n<div align="center">\n\n${parts.join(" | ")}\n\n</div>`
-      : header;
-  }, [user?.fullName, viewerName]);
-
-  const getCombinedContent = useCallback((values) => {
-    const { summary, skills, experience, education, projects } = values;
-    return [
-      getContactMarkdown(values),
-      summary && `## Professional Summary\n\n${summary}`,
-      skills && `## Skills\n\n${skills}`,
-      entriesToMarkdown(experience, "Work Experience"),
-      entriesToMarkdown(education, "Education"),
-      entriesToMarkdown(projects, "Projects"),
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-  }, [getContactMarkdown]);
 
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -645,12 +645,12 @@ export default function ResumeBuilder({
               <div>
                 <p className="font-medium">Editing an existing resume</p>
                 <p className="text-sm text-muted-foreground">
-                  Markdown editing is enabled. Structured form mode starts a new
-                  draft and does not import your saved markdown automatically.
+                  Markdown editing is enabled. Starting a fresh form draft does
+                  not import your saved markdown automatically.
                 </p>
               </div>
               <Button type="button" variant="outline" onClick={startFormDraft}>
-                Start New Form Draft
+                Start Fresh Form Draft
               </Button>
             </div>
           )}

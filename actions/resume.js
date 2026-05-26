@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
 import { demoResume } from "@/lib/demo-data";
 import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
+import { AI_RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -91,11 +92,20 @@ export async function improveWithAI({ current, type }) {
   `;
 
   try {
+    await enforceRateLimit({
+      ...AI_RATE_LIMITS.resumeImprove,
+      subject: userId,
+    });
+
     const result = await model.generateContent(prompt);
     const response = result.response;
     const improvedContent = response.text().trim();
     return improvedContent;
   } catch (error) {
+    if (error?.name === "RateLimitError") {
+      throw error;
+    }
+
     console.error("Error improving content:", error);
     throw new Error("Failed to improve content");
   }

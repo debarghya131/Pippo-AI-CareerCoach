@@ -4,6 +4,11 @@ import { db } from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { demoAssessments } from "@/lib/demo-data";
 import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
+import {
+  AI_RATE_LIMITS,
+  enforceRateLimit,
+  RateLimitError,
+} from "@/lib/rate-limit";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -267,6 +272,11 @@ export async function generateQuiz() {
   `;
 
   try {
+    await enforceRateLimit({
+      ...AI_RATE_LIMITS.quizGenerate,
+      subject: userId,
+    });
+
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();
@@ -274,6 +284,10 @@ export async function generateQuiz() {
 
     return normalizeQuestions(user.industry, user.skills, quiz.questions);
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      throw error;
+    }
+
     console.error("Error generating quiz:", error);
     return buildFallbackQuestions(user.industry, user.skills);
   }
@@ -321,12 +335,22 @@ export async function saveQuizResult(questions, answers, score) {
     `;
 
     try {
+      await enforceRateLimit({
+        ...AI_RATE_LIMITS.quizImprovementTip,
+        subject: userId,
+      });
+
       const tipResult = await model.generateContent(improvementPrompt);
 
       improvementTip = tipResult.response.text().trim();
     } catch (error) {
-      console.error("Error generating improvement tip:", error);
-      // Continue without improvement tip if generation fails
+      if (error instanceof RateLimitError) {
+        improvementTip =
+          "Review the concepts behind the questions you missed and practice a few similar scenarios before your next interview.";
+      } else {
+        console.error("Error generating improvement tip:", error);
+        // Continue without improvement tip if generation fails
+      }
     }
   }
 
