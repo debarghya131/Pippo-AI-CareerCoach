@@ -16,6 +16,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider
+      prefetchUI={false}
       appearance={{
         baseTheme: dark,
       }}

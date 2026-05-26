@@ -1,4 +1,5 @@
-import { SignUp } from "@clerk/nextjs";
+import { ClerkLoaded, ClerkLoading, SignUp } from "@clerk/nextjs";
+import { resolveAuthRedirect } from "@/lib/auth-redirect";
 
 const authAppearance = {
   elements: {
@@ -27,6 +28,32 @@ const authAppearance = {
   },
 };
 
-export default function Page() {
-  return <SignUp routing="path" path="/sign-up" appearance={authAppearance} />;
+export default async function Page({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const redirectParam = resolvedSearchParams?.redirect_url;
+  const forceRedirectUrl = await resolveAuthRedirect(redirectParam);
+
+  return (
+    <>
+      <ClerkLoading>
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-card/95 p-8 text-center shadow-2xl backdrop-blur">
+          <p className="text-sm text-muted-foreground">
+            Loading sign-up...
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            If this hangs in production, verify the Clerk domain, SSL
+            certificate, and publishable key for this environment.
+          </p>
+        </div>
+      </ClerkLoading>
+      <ClerkLoaded>
+        <SignUp
+          routing="path"
+          path="/sign-up"
+          appearance={authAppearance}
+          {...(forceRedirectUrl ? { forceRedirectUrl } : {})}
+        />
+      </ClerkLoaded>
+    </>
+  );
 }

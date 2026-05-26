@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { demoIndustryInsights } from "@/lib/demo-data";
 import { getViewerContext } from "@/lib/demo-server";
 import { AI_RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
+import { checkUser } from "@/lib/checkUser";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -131,8 +132,12 @@ export async function getIndustryInsights() {
 
   if (!userId) throw new Error("Unauthorized");
 
+  const syncedUser = await checkUser();
+
+  if (!syncedUser) throw new Error("User not found");
+
   const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
+    where: { id: syncedUser.id },
     include: {
       industryInsight: true,
     },

@@ -1,8 +1,8 @@
 import React from "react";
-import { SignInButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { getViewerContext } from "@/lib/demo-server";
+import { ResilientSignInButton } from "@/components/resilient-auth-buttons";
 
 const MainLayout = async ({ children }) => {
   const { userId, isDemoMode: demoMode } = await getViewerContext();
@@ -24,12 +24,12 @@ const MainLayout = async ({ children }) => {
           </div>
           <div className="flex gap-2">
             {!userId ? (
-              <SignInButton
+              <ResilientSignInButton
                 mode="redirect"
                 forceRedirectUrl="/demo/exit?next=/dashboard"
               >
                 <Button>Sign In For Full Access</Button>
-              </SignInButton>
+              </ResilientSignInButton>
             ) : (
               <Button asChild variant="secondary">
                 <a href="/demo/exit?next=/dashboard">Exit Demo</a>

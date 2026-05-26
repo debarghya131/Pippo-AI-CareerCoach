@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SignUpButton } from "@clerk/nextjs";
+import { ResilientSignUpButton } from "@/components/resilient-auth-buttons";
 
 const HeroSection = ({ isAuthenticated = false, dashboardHref = "/dashboard" }) => {
   const imageRef = useRef(null);
@@ -49,11 +49,11 @@ const HeroSection = ({ isAuthenticated = false, dashboardHref = "/dashboard" }) 
               </Button>
             </Link>
           ) : (
-            <SignUpButton forceRedirectUrl={dashboardHref}>
+            <ResilientSignUpButton forceRedirectUrl={dashboardHref}>
               <Button size="lg" className="w-full px-8 sm:w-auto">
                 Get Started
               </Button>
-            </SignUpButton>
+            </ResilientSignUpButton>
           )}
           <Link href="/demo">
             <Button size="lg" variant="outline" className="w-full px-8 sm:w-auto">
@@ -69,7 +69,7 @@ const HeroSection = ({ isAuthenticated = false, dashboardHref = "/dashboard" }) 
               height={720}
               alt="Dashboard Preview"
               className="mx-auto w-full max-w-[min(100%,1100px)] rounded-lg border shadow-2xl"
-              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1100px"
             />
           </div>
         </div>

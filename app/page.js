@@ -18,7 +18,7 @@ import { testimonial } from "@/data/testimonial";
 import { faqs } from "@/data/faqs";
 import { howItWorks } from "@/data/howItWorks";
 import { getViewerContext } from "@/lib/demo-server";
-import { SignUpButton } from "@clerk/nextjs";
+import { ResilientSignUpButton } from "@/components/resilient-auth-buttons";
 
 export default async function LandingPage() {
   const { userId, isDemoMode } = await getViewerContext();
@@ -213,7 +213,7 @@ export default async function LandingPage() {
                 </Button>
               </Link>
             ) : (
-              <SignUpButton forceRedirectUrl={dashboardHref}>
+              <ResilientSignUpButton forceRedirectUrl={dashboardHref}>
                 <Button
                   size="lg"
                   variant="secondary"
@@ -222,7 +222,7 @@ export default async function LandingPage() {
                   Start Your Journey Today{" "}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </SignUpButton>
+              </ResilientSignUpButton>
             )}
           </div>
         </div>

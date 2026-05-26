@@ -5,13 +5,11 @@ import { revalidatePath } from "next/cache";
 import { generateAIInsights } from "./dashboard";
 import { demoProfile } from "@/lib/demo-data";
 import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
+import { checkUser } from "@/lib/checkUser";
 
 export async function updateUser(data) {
   const { userId } = await requireWritableUser();
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  const user = await checkUser();
 
   if (!user) throw new Error("User not found");
 
@@ -83,14 +81,7 @@ export async function getUserOnboardingStatus() {
   if (!userId) throw new Error("Unauthorized");
 
   try {
-    const user = await db.user.findUnique({
-      where: {
-        clerkUserId: userId,
-      },
-      select: {
-        industry: true,
-      },
-    });
+    const user = await checkUser();
 
     return {
       isOnboarded: !!user?.industry,
@@ -116,19 +107,16 @@ export async function getCurrentUserProfile() {
   if (!userId) throw new Error("Unauthorized");
 
   try {
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-      select: {
-        industry: true,
-        experience: true,
-        bio: true,
-        skills: true,
-      },
-    });
+    const user = await checkUser();
 
     if (!user) throw new Error("User not found");
 
-    return user;
+    return {
+      industry: user.industry,
+      experience: user.experience,
+      bio: user.bio,
+      skills: user.skills,
+    };
   } catch (error) {
     console.error("Error fetching current user profile:", error);
     throw new Error("Failed to fetch current user profile");

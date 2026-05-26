@@ -3,7 +3,7 @@ import { BarLoader } from "react-spinners";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { getViewerContext } from "@/lib/demo-server";
-import { SignInButton } from "@clerk/nextjs";
+import { ResilientSignInButton } from "@/components/resilient-auth-buttons";
 
 export default async function Layout({ children }) {
   const { userId, isDemoMode: demoMode } = await getViewerContext();
@@ -16,14 +16,14 @@ export default async function Layout({ children }) {
         </h1>
         {demoMode ? (
           !userId ? (
-            <SignInButton
+            <ResilientSignInButton
               mode="redirect"
               forceRedirectUrl="/demo/exit?next=/dashboard"
             >
               <Button variant="outline" className="w-full sm:w-auto">
                 Sign In to Edit
               </Button>
-            </SignInButton>
+            </ResilientSignInButton>
           ) : (
             <Button asChild variant="outline" className="w-full sm:w-auto">
               <a href="/demo/exit?next=/dashboard">Exit Demo to Edit</a>

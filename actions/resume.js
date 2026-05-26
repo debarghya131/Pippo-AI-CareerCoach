@@ -6,16 +6,14 @@ import { revalidatePath } from "next/cache";
 import { demoResume } from "@/lib/demo-data";
 import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
 import { AI_RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
+import { checkUser } from "@/lib/checkUser";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function saveResume(content) {
-  const { userId } = await requireWritableUser();
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  await requireWritableUser();
+  const user = await checkUser();
 
   if (!user) throw new Error("User not found");
 
@@ -42,17 +40,13 @@ export async function saveResume(content) {
 }
 
 export async function getResume() {
-  const { userId, isDemoMode } = await getViewerContext();
+  const { isDemoMode } = await getViewerContext();
 
   if (isDemoMode) {
     return demoResume;
   }
 
-  if (!userId) throw new Error("Unauthorized");
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  const user = await checkUser();
 
   if (!user) throw new Error("User not found");
 
@@ -65,13 +59,7 @@ export async function getResume() {
 
 export async function improveWithAI({ current, type }) {
   const { userId } = await requireWritableUser();
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-    include: {
-      industryInsight: true,
-    },
-  });
+  const user = await checkUser();
 
   if (!user) throw new Error("User not found");
 

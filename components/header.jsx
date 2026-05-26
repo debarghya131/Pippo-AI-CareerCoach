@@ -10,7 +10,7 @@ import {
   Menu,
 } from "lucide-react";
 import Link from "next/link";
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +18,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
-import { checkUser } from "@/lib/checkUser";
 import { getViewerContext } from "@/lib/demo-server";
+import {
+  ResilientSignInButton,
+  ResilientSignUpButton,
+} from "@/components/resilient-auth-buttons";
 
 export default async function Header() {
   const { userId, isDemoMode: demoMode } = await getViewerContext();
@@ -32,10 +35,6 @@ export default async function Header() {
     ? "Cover Letter Preview"
     : "Cover Letter";
   const interviewLabel = isDemoGuest ? "Interview Preview" : "Interview Prep";
-
-  if (userId && !demoMode) {
-    await checkUser();
-  }
 
   return (
     <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-md z-50 supports-[backdrop-filter]:bg-background/60">
@@ -101,7 +100,7 @@ export default async function Header() {
             </>
           ) : (
             <>
-              <SignUpButton forceRedirectUrl="/dashboard">
+              <ResilientSignUpButton forceRedirectUrl="/dashboard">
                 <Button
                   variant="outline"
                   className="hidden md:inline-flex items-center gap-2"
@@ -109,12 +108,12 @@ export default async function Header() {
                   <LayoutDashboard className="h-4 w-4" />
                   Industry Insights
                 </Button>
-              </SignUpButton>
-              <SignUpButton forceRedirectUrl="/dashboard">
+              </ResilientSignUpButton>
+              <ResilientSignUpButton forceRedirectUrl="/dashboard">
                 <Button variant="ghost" className="md:hidden w-10 h-10 p-0">
                   <LayoutDashboard className="h-4 w-4" />
                 </Button>
-              </SignUpButton>
+              </ResilientSignUpButton>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -126,28 +125,28 @@ export default async function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/resume">
+                    <ResilientSignUpButton forceRedirectUrl="/resume">
                       <button type="button" className="flex w-full items-center gap-2">
                         <FileText className="h-4 w-4" />
                         Build Resume
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/ai-cover-letter">
+                    <ResilientSignUpButton forceRedirectUrl="/ai-cover-letter">
                       <button type="button" className="flex w-full items-center gap-2">
                         <PenBox className="h-4 w-4" />
                         Cover Letter
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/interview">
+                    <ResilientSignUpButton forceRedirectUrl="/interview">
                       <button type="button" className="flex w-full items-center gap-2">
                         <GraduationCap className="h-4 w-4" />
                         Interview Prep
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -163,14 +162,14 @@ export default async function Header() {
           )}
 
           {!userId && (
-            <SignInButton
+            <ResilientSignInButton
               mode="redirect"
               {...(demoMode
                 ? { forceRedirectUrl: "/demo/exit?next=/dashboard" }
                 : {})}
             >
               <Button variant="outline">Sign In</Button>
-            </SignInButton>
+            </ResilientSignInButton>
           )}
 
           {userId && (
@@ -234,7 +233,7 @@ export default async function Header() {
                   </DropdownMenuItem>
                   {!userId && (
                     <DropdownMenuItem asChild>
-                      <SignInButton
+                      <ResilientSignInButton
                         mode="redirect"
                         {...(demoMode
                           ? {
@@ -250,14 +249,14 @@ export default async function Header() {
                           <StarsIcon className="h-4 w-4" />
                           Sign In
                         </button>
-                      </SignInButton>
+                      </ResilientSignInButton>
                     </DropdownMenuItem>
                   )}
                 </>
               ) : (
                 <>
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/dashboard">
+                    <ResilientSignUpButton forceRedirectUrl="/dashboard">
                       <button
                         type="button"
                         className="flex w-full items-center gap-2"
@@ -265,10 +264,10 @@ export default async function Header() {
                         <LayoutDashboard className="h-4 w-4" />
                         Industry Insights
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/resume">
+                    <ResilientSignUpButton forceRedirectUrl="/resume">
                       <button
                         type="button"
                         className="flex w-full items-center gap-2"
@@ -276,10 +275,10 @@ export default async function Header() {
                         <FileText className="h-4 w-4" />
                         Build Resume
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/ai-cover-letter">
+                    <ResilientSignUpButton forceRedirectUrl="/ai-cover-letter">
                       <button
                         type="button"
                         className="flex w-full items-center gap-2"
@@ -287,10 +286,10 @@ export default async function Header() {
                         <PenBox className="h-4 w-4" />
                         Cover Letter
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <SignUpButton forceRedirectUrl="/interview">
+                    <ResilientSignUpButton forceRedirectUrl="/interview">
                       <button
                         type="button"
                         className="flex w-full items-center gap-2"
@@ -298,7 +297,7 @@ export default async function Header() {
                         <GraduationCap className="h-4 w-4" />
                         Interview Prep
                       </button>
-                    </SignUpButton>
+                    </ResilientSignUpButton>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/demo" className="flex items-center gap-2">
@@ -307,7 +306,7 @@ export default async function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <SignInButton mode="redirect">
+                    <ResilientSignInButton mode="redirect">
                       <button
                         type="button"
                         className="flex w-full items-center gap-2"
@@ -315,7 +314,7 @@ export default async function Header() {
                         <StarsIcon className="h-4 w-4" />
                         Sign In
                       </button>
-                    </SignInButton>
+                    </ResilientSignInButton>
                   </DropdownMenuItem>
                 </>
               )}
