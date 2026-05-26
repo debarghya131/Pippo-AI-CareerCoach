@@ -29,6 +29,7 @@ import {
 import useFetch from "@/hooks/use-fetch";
 import { onboardingSchema } from "@/app/lib/schema";
 import { updateUser } from "@/actions/user";
+import { DEMO_READONLY_MESSAGE } from "@/lib/demo";
 
 const emptyValues = {
   industry: "",
@@ -38,11 +39,19 @@ const emptyValues = {
   bio: "",
 };
 
-const OnboardingForm = ({ industries, initialValues = null, isEditing = false }) => {
+const OnboardingForm = ({
+  industries,
+  initialValues = null,
+  isEditing = false,
+  isDemoMode = false,
+}) => {
   const router = useRouter();
   const [selectedIndustry, setSelectedIndustry] = useState(() => {
     if (!initialValues?.industry) return null;
-    return industries.find((industry) => industry.id === initialValues.industry) || null;
+    return (
+      industries.find((industry) => industry.id === initialValues.industry) ||
+      null
+    );
   });
 
   const {
@@ -63,6 +72,11 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
   });
 
   const onSubmit = async (values) => {
+    if (isDemoMode) {
+      toast.error(DEMO_READONLY_MESSAGE);
+      return;
+    }
+
     try {
       const formattedIndustry = `${values.industry}-${values.subIndustry
         .toLowerCase()
@@ -109,16 +123,25 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
             {isEditing ? "Edit Your Profile" : "Complete Your Profile"}
           </CardTitle>
           <CardDescription>
-            {isEditing
+            {isDemoMode
+              ? "This demo profile is prefilled for exploration. Sign in to update anything."
+              : isEditing
               ? "Update your profile details to refresh your personalized career insights."
               : "Select your industry to get personalized career insights and recommendations."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {isDemoMode && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                Demo mode is read-only. You can inspect the profile fields, but
+                saving changes requires sign-in.
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
               <Select
+                disabled={isDemoMode}
                 value={watchIndustry || undefined}
                 onValueChange={(value) => {
                   setValue("industry", value);
@@ -150,6 +173,7 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
               <div className="space-y-2">
                 <Label htmlFor="subIndustry">Specialization</Label>
                 <Select
+                  disabled={isDemoMode}
                   value={watchSubIndustry || undefined}
                   onValueChange={(value) => setValue("subIndustry", value)}
                 >
@@ -182,6 +206,7 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
                 type="number"
                 min="0"
                 max="50"
+                disabled={isDemoMode}
                 placeholder="Enter years of experience"
                 {...register("experience")}
               />
@@ -196,6 +221,7 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
               <Label htmlFor="skills">Skills</Label>
               <Input
                 id="skills"
+                disabled={isDemoMode}
                 placeholder="e.g., Python, JavaScript, Project Management"
                 {...register("skills")}
               />
@@ -211,6 +237,7 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
               <Label htmlFor="bio">Professional Bio</Label>
               <Textarea
                 id="bio"
+                disabled={isDemoMode}
                 placeholder="Tell us about your professional background..."
                 className="h-32"
                 {...register("bio")}
@@ -220,14 +247,25 @@ const OnboardingForm = ({ industries, initialValues = null, isEditing = false })
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={updateLoading}>
-              {updateLoading ? (
+            <Button
+              type={isDemoMode ? "button" : "submit"}
+              className="w-full"
+              disabled={updateLoading}
+              onClick={
+                isDemoMode ? () => toast.error(DEMO_READONLY_MESSAGE) : undefined
+              }
+            >
+              {updateLoading && !isDemoMode ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {isEditing ? "Updating..." : "Saving..."}
                 </>
               ) : (
-                isEditing ? "Update Profile" : "Complete Profile"
+                isDemoMode
+                  ? "Sign In To Edit"
+                  : isEditing
+                  ? "Update Profile"
+                  : "Complete Profile"
               )}
             </Button>
             <Button

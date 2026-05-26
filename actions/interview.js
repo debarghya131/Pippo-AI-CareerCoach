@@ -1,8 +1,9 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { demoAssessments } from "@/lib/demo-data";
+import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -231,8 +232,7 @@ const normalizeQuestions = (industry, skills, rawQuestions) => {
 };
 
 export async function generateQuiz() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { userId } = await requireWritableUser();
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
@@ -280,8 +280,7 @@ export async function generateQuiz() {
 }
 
 export async function saveQuizResult(questions, answers, score) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { userId } = await requireWritableUser();
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
@@ -325,7 +324,6 @@ export async function saveQuizResult(questions, answers, score) {
       const tipResult = await model.generateContent(improvementPrompt);
 
       improvementTip = tipResult.response.text().trim();
-      console.log(improvementTip);
     } catch (error) {
       console.error("Error generating improvement tip:", error);
       // Continue without improvement tip if generation fails
@@ -351,7 +349,12 @@ export async function saveQuizResult(questions, answers, score) {
 }
 
 export async function getAssessments() {
-  const { userId } = await auth();
+  const { userId, isDemoMode } = await getViewerContext();
+
+  if (isDemoMode) {
+    return demoAssessments;
+  }
+
   if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({

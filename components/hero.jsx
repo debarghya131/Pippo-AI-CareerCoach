@@ -4,8 +4,9 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { SignUpButton } from "@clerk/nextjs";
 
-const HeroSection = () => {
+const HeroSection = ({ isAuthenticated = false, dashboardHref = "/dashboard" }) => {
   const imageRef = useRef(null);
 
   useEffect(() => {
@@ -41,12 +42,20 @@ const HeroSection = () => {
           </p>
         </div>
         <div className="flex justify-center space-x-4">
-          <Link href="/dashboard">
-            <Button size="lg" className="px-8">
-              Get Started
-            </Button>
-          </Link>
-          <Link href="/dashboard">
+          {isAuthenticated ? (
+            <Link href={dashboardHref}>
+              <Button size="lg" className="px-8">
+                Get Started
+              </Button>
+            </Link>
+          ) : (
+            <SignUpButton forceRedirectUrl={dashboardHref}>
+              <Button size="lg" className="px-8">
+                Get Started
+              </Button>
+            </SignUpButton>
+          )}
+          <Link href="/demo">
             <Button size="lg" variant="outline" className="px-8">
               Watch Demo
             </Button>

@@ -1,13 +1,13 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { generateAIInsights } from "./dashboard";
+import { demoProfile } from "@/lib/demo-data";
+import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
 
 export async function updateUser(data) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { userId } = await requireWritableUser();
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
@@ -74,14 +74,13 @@ export async function updateUser(data) {
 }
 
 export async function getUserOnboardingStatus() {
-  const { userId } = await auth();
+  const { userId, isDemoMode } = await getViewerContext();
+
+  if (isDemoMode) {
+    return { isOnboarded: true };
+  }
+
   if (!userId) throw new Error("Unauthorized");
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
-
-  if (!user) throw new Error("User not found");
 
   try {
     const user = await db.user.findUnique({
@@ -103,7 +102,17 @@ export async function getUserOnboardingStatus() {
 }
 
 export async function getCurrentUserProfile() {
-  const { userId } = await auth();
+  const { userId, isDemoMode } = await getViewerContext();
+
+  if (isDemoMode) {
+    return {
+      industry: demoProfile.industry,
+      experience: demoProfile.experience,
+      bio: demoProfile.bio,
+      skills: demoProfile.skills,
+    };
+  }
+
   if (!userId) throw new Error("Unauthorized");
 
   try {

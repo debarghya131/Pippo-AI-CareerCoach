@@ -16,8 +16,9 @@ import { generateQuiz, saveQuizResult } from "@/actions/interview";
 import QuizResult from "./quiz-result";
 import useFetch from "@/hooks/use-fetch";
 import { BarLoader } from "react-spinners";
+import { DEMO_READONLY_MESSAGE } from "@/lib/demo";
 
-export default function Quiz() {
+export default function Quiz({ isDemoMode = false }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -68,11 +69,9 @@ export default function Quiz() {
 
   const finishQuiz = async () => {
     const score = calculateScore();
-    try {
-      await saveQuizResultFn(quizData, answers, score);
+    const savedResult = await saveQuizResultFn(quizData, answers, score);
+    if (savedResult) {
       toast.success("Quiz completed!");
-    } catch (error) {
-      toast.error(error.message || "Failed to save quiz results");
     }
   };
 
@@ -108,10 +107,23 @@ export default function Quiz() {
             This quiz contains 10 questions specific to your industry and
             skills. Take your time and choose the best answer for each question.
           </p>
+          {isDemoMode && (
+            <p className="mt-3 text-sm text-amber-200">
+              Demo mode lets you explore the screen, but quiz generation and
+              saving are disabled until you sign in.
+            </p>
+          )}
         </CardContent>
         <CardFooter>
-          <Button onClick={generateQuizFn} className="w-full">
-            Start Quiz
+          <Button
+            onClick={
+              isDemoMode
+                ? () => toast.error(DEMO_READONLY_MESSAGE)
+                : generateQuizFn
+            }
+            className="w-full"
+          >
+            {isDemoMode ? "Sign In To Start Quiz" : "Start Quiz"}
           </Button>
         </CardFooter>
       </Card>

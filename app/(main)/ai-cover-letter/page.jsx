@@ -3,9 +3,13 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CoverLetterList from "./_components/cover-letter-list";
+import { isDemoMode } from "@/lib/demo-server";
 
 export default async function CoverLetterPage() {
-  const coverLetters = await getCoverLetters();
+  const [coverLetters, demoMode] = await Promise.all([
+    getCoverLetters(),
+    isDemoMode(),
+  ]);
 
   return (
     <div>
@@ -14,12 +18,12 @@ export default async function CoverLetterPage() {
         <Link href="/ai-cover-letter/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Create New
+            {demoMode ? "Preview Generator" : "Create New"}
           </Button>
         </Link>
       </div>
 
-      <CoverLetterList coverLetters={coverLetters} />
+      <CoverLetterList coverLetters={coverLetters} isDemoMode={demoMode} />
     </div>
   );
 }

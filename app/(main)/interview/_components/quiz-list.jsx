@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import QuizResult from "./quiz-result";
 
-export default function QuizList({ assessments }) {
+export default function QuizList({ assessments, isDemoMode = false }) {
   const router = useRouter();
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
@@ -37,7 +37,7 @@ export default function QuizList({ assessments }) {
               </CardDescription>
             </div>
             <Button onClick={() => router.push("/interview/mock")}>
-              Start New Quiz
+              {isDemoMode ? "Preview Quiz Flow" : "Start New Quiz"}
             </Button>
           </div>
         </CardHeader>

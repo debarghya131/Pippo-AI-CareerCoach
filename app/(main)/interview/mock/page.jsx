@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isDemoMode } from "@/lib/demo-server";
 import Quiz from "../_components/quiz";
 
-export default function MockInterviewPage() {
+export default async function MockInterviewPage() {
+  const demoMode = await isDemoMode();
+
   return (
     <div className="container mx-auto space-y-4 py-6">
       <div className="flex flex-col space-y-2 mx-2">
@@ -22,7 +25,7 @@ export default function MockInterviewPage() {
         </div>
       </div>
 
-      <Quiz />
+      <Quiz isDemoMode={demoMode} />
     </div>
   );
 }

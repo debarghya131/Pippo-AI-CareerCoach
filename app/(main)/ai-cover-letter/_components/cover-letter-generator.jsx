@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -21,9 +20,16 @@ import useFetch from "@/hooks/use-fetch";
 import { coverLetterSchema } from "@/app/lib/schema";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { DEMO_READONLY_MESSAGE } from "@/lib/demo";
 
-export default function CoverLetterGenerator() {
+export default function CoverLetterGenerator({ isDemoMode = false }) {
   const router = useRouter();
+  const demoDefaults = {
+    companyName: "NovaStack",
+    jobTitle: "Frontend Engineer",
+    jobDescription:
+      "Build polished user-facing interfaces, collaborate with backend engineers, and improve product performance across core workflows.",
+  };
 
   const {
     register,
@@ -32,6 +38,7 @@ export default function CoverLetterGenerator() {
     reset,
   } = useForm({
     resolver: zodResolver(coverLetterSchema),
+    defaultValues: isDemoMode ? demoDefaults : undefined,
   });
 
   const {
@@ -47,9 +54,14 @@ export default function CoverLetterGenerator() {
       router.push(`/ai-cover-letter/${generatedLetter.id}`);
       reset();
     }
-  }, [generatedLetter]);
+  }, [generatedLetter, reset, router]);
 
   const onSubmit = async (data) => {
+    if (isDemoMode) {
+      toast.error(DEMO_READONLY_MESSAGE);
+      return;
+    }
+
     try {
       await generateLetterFn(data);
     } catch (error) {
@@ -63,10 +75,17 @@ export default function CoverLetterGenerator() {
         <CardHeader>
           <CardTitle>Job Details</CardTitle>
           <CardDescription>
-            Provide information about the position you're applying for
+            {isDemoMode
+              ? "Explore the generator layout here. Sign in to create a real cover letter."
+              : "Provide information about the position you're applying for"}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isDemoMode && (
+            <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              Demo mode is read-only. Generation is disabled until you sign in.
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Form fields remain the same */}
             <div className="grid grid-cols-2 gap-4">
@@ -74,6 +93,7 @@ export default function CoverLetterGenerator() {
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
                   id="companyName"
+                  disabled={isDemoMode}
                   placeholder="Enter company name"
                   {...register("companyName")}
                 />
@@ -88,6 +108,7 @@ export default function CoverLetterGenerator() {
                 <Label htmlFor="jobTitle">Job Title</Label>
                 <Input
                   id="jobTitle"
+                  disabled={isDemoMode}
                   placeholder="Enter job title"
                   {...register("jobTitle")}
                 />
@@ -103,6 +124,7 @@ export default function CoverLetterGenerator() {
               <Label htmlFor="jobDescription">Job Description</Label>
               <Textarea
                 id="jobDescription"
+                disabled={isDemoMode}
                 placeholder="Paste the job description here"
                 className="h-32"
                 {...register("jobDescription")}
@@ -115,14 +137,20 @@ export default function CoverLetterGenerator() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={generating}>
-                {generating ? (
+              <Button
+                type={isDemoMode ? "button" : "submit"}
+                disabled={generating && !isDemoMode}
+                onClick={
+                  isDemoMode ? () => toast.error(DEMO_READONLY_MESSAGE) : undefined
+                }
+              >
+                {generating && !isDemoMode ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Generating...
                   </>
                 ) : (
-                  "Generate Cover Letter"
+                  isDemoMode ? "Sign In To Generate" : "Generate Cover Letter"
                 )}
               </Button>
             </div>
