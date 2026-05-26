@@ -16,7 +16,7 @@ import { generateQuiz, saveQuizResult } from "@/actions/interview";
 import QuizResult from "./quiz-result";
 import useFetch from "@/hooks/use-fetch";
 import { BarLoader } from "react-spinners";
-import { DEMO_READONLY_MESSAGE } from "@/lib/demo";
+import { demoQuizQuestions } from "@/lib/demo-data";
 
 export default function Quiz({ isDemoMode = false }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -36,11 +36,13 @@ export default function Quiz({ isDemoMode = false }) {
     setData: setResultData,
   } = useFetch(saveQuizResult);
 
+  const activeQuizData = isDemoMode ? demoQuizQuestions : quizData;
+
   useEffect(() => {
-    if (quizData) {
-      setAnswers(new Array(quizData.length).fill(null));
+    if (activeQuizData) {
+      setAnswers(new Array(activeQuizData.length).fill(null));
     }
-  }, [quizData]);
+  }, [activeQuizData]);
 
   const handleAnswer = (answer) => {
     const newAnswers = [...answers];
@@ -49,7 +51,7 @@ export default function Quiz({ isDemoMode = false }) {
   };
 
   const handleNext = () => {
-    if (currentQuestion < quizData.length - 1) {
+    if (currentQuestion < activeQuizData.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setShowExplanation(false);
     } else {
@@ -60,16 +62,44 @@ export default function Quiz({ isDemoMode = false }) {
   const calculateScore = () => {
     let correct = 0;
     answers.forEach((answer, index) => {
-      if (answer === quizData[index].correctAnswer) {
+      if (answer === activeQuizData[index].correctAnswer) {
         correct++;
       }
     });
-    return (correct / quizData.length) * 100;
+    return (correct / activeQuizData.length) * 100;
   };
 
   const finishQuiz = async () => {
     const score = calculateScore();
-    const savedResult = await saveQuizResultFn(quizData, answers, score);
+    if (isDemoMode) {
+      const questionResults = activeQuizData.map((question, index) => ({
+        question: question.question,
+        answer: question.correctAnswer,
+        userAnswer: answers[index],
+        isCorrect: question.correctAnswer === answers[index],
+        explanation: question.explanation,
+      }));
+
+      const wrongAnswers = questionResults.filter((question) => !question.isCorrect);
+      const improvementTip = wrongAnswers.length
+        ? "Review debugging, validation, and tradeoff reasoning before your next round. Those themes usually create the biggest score jump."
+        : "Strong work. Your answers show solid fundamentals and clear reasoning under interview-style pressure.";
+
+      setResultData({
+        id: "demo-quiz-result",
+        userId: "demo-user",
+        quizScore: score,
+        questions: questionResults,
+        category: "Technical",
+        improvementTip,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      toast.success("Demo quiz completed!");
+      return;
+    }
+
+    const savedResult = await saveQuizResultFn(activeQuizData, answers, score);
     if (savedResult) {
       toast.success("Quiz completed!");
     }
@@ -79,8 +109,11 @@ export default function Quiz({ isDemoMode = false }) {
     setCurrentQuestion(0);
     setAnswers([]);
     setShowExplanation(false);
-    generateQuizFn();
     setResultData(null);
+
+    if (!isDemoMode) {
+      generateQuizFn();
+    }
   };
 
   if (generatingQuiz) {
@@ -96,7 +129,7 @@ export default function Quiz({ isDemoMode = false }) {
     );
   }
 
-  if (!quizData) {
+  if (!activeQuizData) {
     return (
       <Card className="mx-0 sm:mx-2">
         <CardHeader>
@@ -115,29 +148,27 @@ export default function Quiz({ isDemoMode = false }) {
           )}
         </CardContent>
         <CardFooter>
-          <Button
-            onClick={
-              isDemoMode
-                ? () => toast.error(DEMO_READONLY_MESSAGE)
-                : generateQuizFn
-            }
-            className="w-full"
-          >
-            {isDemoMode ? "Sign In To Start Quiz" : "Start Quiz"}
+          <Button onClick={generateQuizFn} className="w-full">
+            Start Quiz
           </Button>
         </CardFooter>
       </Card>
     );
   }
 
-  const question = quizData[currentQuestion];
+  const question = activeQuizData[currentQuestion];
 
   return (
     <Card className="mx-0 sm:mx-2">
       <CardHeader>
         <CardTitle>
-          Question {currentQuestion + 1} of {quizData.length}
+          Question {currentQuestion + 1} of {activeQuizData.length}
         </CardTitle>
+        {isDemoMode && (
+          <p className="text-sm text-amber-200">
+            Demo quiz answers stay local to this preview and are not saved.
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-lg font-medium">{question.question}</p>
