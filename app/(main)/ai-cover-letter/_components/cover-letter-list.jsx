@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Edit2, Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -24,8 +24,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { deleteCoverLetter } from "@/actions/cover-letter";
+import { DEMO_READONLY_MESSAGE } from "@/lib/demo";
 
-export default function CoverLetterList({ coverLetters }) {
+export default function CoverLetterList({ coverLetters, isDemoMode = false }) {
   const router = useRouter();
 
   const handleDelete = async (id) => {
@@ -66,39 +67,52 @@ export default function CoverLetterList({ coverLetters }) {
                 </CardDescription>
               </div>
               <div className="flex space-x-2">
-                <AlertDialog>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => router.push(`/ai-cover-letter/${letter.id}`)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                {isDemoMode ? (
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => router.push(`/ai-cover-letter/${letter.id}`)}
+                    onClick={() => toast.error(DEMO_READONLY_MESSAGE)}
                   >
-                    <Eye className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon">
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Cover Letter?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete your cover letter for {letter.jobTitle} at{" "}
-                        {letter.companyName}.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(letter.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Cover Letter?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete your cover letter for {letter.jobTitle} at{" "}
+                          {letter.companyName}.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(letter.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
           </CardHeader>

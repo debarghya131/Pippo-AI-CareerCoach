@@ -1,11 +1,15 @@
 import { industries } from "@/data/industries";
+import { isDemoMode } from "@/lib/demo-server";
 import OnboardingForm from "./_components/onboarding-form";
 import { getCurrentUserProfile } from "@/actions/user";
 
 const formatSubIndustrySlug = (value) => value.toLowerCase().replace(/ /g, "-");
 
 export default async function OnboardingPage() {
-  const userProfile = await getCurrentUserProfile();
+  const [userProfile, demoMode] = await Promise.all([
+    getCurrentUserProfile(),
+    isDemoMode(),
+  ]);
 
   let initialValues = null;
 
@@ -35,6 +39,7 @@ export default async function OnboardingPage() {
         industries={industries}
         initialValues={initialValues}
         isEditing={!!userProfile?.industry}
+        isDemoMode={demoMode}
       />
     </main>
   );

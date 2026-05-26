@@ -1,16 +1,16 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
+import { demoResume } from "@/lib/demo-data";
+import { getViewerContext, requireWritableUser } from "@/lib/demo-server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function saveResume(content) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { userId } = await requireWritableUser();
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
@@ -41,7 +41,12 @@ export async function saveResume(content) {
 }
 
 export async function getResume() {
-  const { userId } = await auth();
+  const { userId, isDemoMode } = await getViewerContext();
+
+  if (isDemoMode) {
+    return demoResume;
+  }
+
   if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
@@ -58,8 +63,7 @@ export async function getResume() {
 }
 
 export async function improveWithAI({ current, type }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { userId } = await requireWritableUser();
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },

@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { DEMO_MODE_COOKIE } from "@/lib/demo";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -11,8 +12,9 @@ const isProtectedRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
+  const isDemoVisitor = req.cookies.get(DEMO_MODE_COOKIE)?.value === "1";
 
-  if (!userId && isProtectedRoute(req)) {
+  if (!userId && !isDemoVisitor && isProtectedRoute(req)) {
     const { redirectToSignIn } = await auth();
     return redirectToSignIn();
   }

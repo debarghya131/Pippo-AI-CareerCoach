@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isDemoMode } from "@/lib/demo-server";
 import CoverLetterGenerator from "../_components/cover-letter-generator";
 
-export default function NewCoverLetterPage() {
+export default async function NewCoverLetterPage() {
+  const demoMode = await isDemoMode();
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col space-y-2">
@@ -24,7 +27,7 @@ export default function NewCoverLetterPage() {
         </div>
       </div>
 
-      <CoverLetterGenerator />
+      <CoverLetterGenerator isDemoMode={demoMode} />
     </div>
   );
 }

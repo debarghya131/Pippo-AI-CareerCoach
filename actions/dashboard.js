@@ -1,8 +1,9 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { demoIndustryInsights } from "@/lib/demo-data";
+import { getViewerContext } from "@/lib/demo-server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -24,6 +25,23 @@ const buildFallbackInsights = (industry) => ({
   keyTrends: ["AI adoption", "Automation", "Remote collaboration"],
   recommendedSkills: ["Domain expertise", "Analytics", "Digital tools"],
 });
+
+const extractJsonObject = (text) => {
+  const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+
+  try {
+    return JSON.parse(cleanedText);
+  } catch {
+    const start = cleanedText.indexOf("{");
+    const end = cleanedText.lastIndexOf("}");
+
+    if (start === -1 || end === -1 || end <= start) {
+      throw new Error("No JSON object found in AI insights response");
+    }
+
+    return JSON.parse(cleanedText.slice(start, end + 1));
+  }
+};
 
 const normalizeInsights = (industry, raw) => {
   const fallback = buildFallbackInsights(industry);
@@ -85,9 +103,8 @@ export const generateAIInsights = async (industry) => {
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();
-    const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
-    return normalizeInsights(industry, JSON.parse(cleanedText));
+    return normalizeInsights(industry, extractJsonObject(text));
   } catch (error) {
     console.error("Failed to generate AI insights:", error);
     return buildFallbackInsights(industry);
@@ -95,7 +112,12 @@ export const generateAIInsights = async (industry) => {
 };
 
 export async function getIndustryInsights() {
-  const { userId } = await auth();
+  const { userId, isDemoMode } = await getViewerContext();
+
+  if (isDemoMode) {
+    return demoIndustryInsights;
+  }
+
   if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({

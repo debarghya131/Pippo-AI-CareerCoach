@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,7 +13,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import MDEditor from "@uiw/react-md-editor";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -24,10 +33,35 @@ import { useUser } from "@clerk/nextjs";
 import { entriesToMarkdown } from "@/app/lib/helper";
 import { resumeSchema } from "@/app/lib/schema";
 import html2pdf from "html2pdf.js/dist/html2pdf.min.js";
+import { DEMO_READONLY_MESSAGE } from "@/lib/demo";
 
-export default function ResumeBuilder({ initialContent }) {
+const emptyResumeValues = {
+  contactInfo: {},
+  summary: "",
+  skills: "",
+  experience: [],
+  education: [],
+  projects: [],
+};
+
+const exportMarkdown = (content) =>
+  (content || "")
+    .replace(/^## <div align="center">(.*?)<\/div>$/m, "# $1")
+    .replace(/<\/?div[^>]*>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+export default function ResumeBuilder({
+  initialContent,
+  isDemoMode = false,
+  viewerName = null,
+}) {
+  const [savedContent, setSavedContent] = useState(initialContent || "");
+  const hasStoredResume = Boolean(savedContent?.trim());
   const [activeTab, setActiveTab] = useState("edit");
-  const [previewContent, setPreviewContent] = useState(initialContent);
+  const [previewContent, setPreviewContent] = useState(initialContent || "");
+  const [isUsingFormDraft, setIsUsingFormDraft] = useState(!hasStoredResume);
+  const hasFormDraftFromStoredResume = hasStoredResume && isUsingFormDraft;
   const { user } = useUser();
   const [resumeMode, setResumeMode] = useState("preview");
 
@@ -36,53 +70,66 @@ export default function ResumeBuilder({ initialContent }) {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(resumeSchema),
-    defaultValues: {
-      contactInfo: {},
-      summary: "",
-      skills: "",
-      experience: [],
-      education: [],
-      projects: [],
-    },
+    defaultValues: emptyResumeValues,
   });
 
   const {
     loading: isSaving,
     fn: saveResumeFn,
     data: saveResult,
-    error: saveError,
   } = useFetch(saveResume);
 
   // Watch form fields for preview updates
   const formValues = watch();
 
   useEffect(() => {
-    if (initialContent) setActiveTab("preview");
+    setSavedContent(initialContent || "");
   }, [initialContent]);
+
+  useEffect(() => {
+    setIsUsingFormDraft(!hasStoredResume);
+
+    if (hasStoredResume) {
+      setActiveTab("preview");
+      setResumeMode("preview");
+      setPreviewContent(savedContent);
+      reset(emptyResumeValues);
+      return;
+    }
+
+    setActiveTab("edit");
+    setPreviewContent("");
+    reset(emptyResumeValues);
+  }, [hasStoredResume, reset, savedContent]);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setActiveTab("preview");
+      setResumeMode("preview");
+    }
+  }, [isDemoMode]);
 
   // Update preview content when form values change
   useEffect(() => {
-    if (activeTab === "edit") {
-      const newContent = getCombinedContent();
-      setPreviewContent(newContent ? newContent : initialContent);
+    if (activeTab === "edit" && isUsingFormDraft) {
+      const newContent = getCombinedContent(formValues);
+      setPreviewContent(newContent || "");
     }
-  }, [formValues, activeTab]);
+  }, [activeTab, formValues, getCombinedContent, isUsingFormDraft]);
 
   // Handle save result
   useEffect(() => {
     if (saveResult && !isSaving) {
       toast.success("Resume saved successfully!");
     }
-    if (saveError) {
-      toast.error(saveError.message || "Failed to save resume");
-    }
-  }, [saveResult, saveError, isSaving]);
+  }, [saveResult, isSaving]);
 
-  const getContactMarkdown = () => {
-    const { contactInfo } = formValues;
+  const getContactMarkdown = useCallback((values) => {
+    const { contactInfo = {} } = values;
     const parts = [];
     if (contactInfo.email) parts.push(`📧 ${contactInfo.email}`);
     if (contactInfo.mobile) parts.push(`📱 ${contactInfo.mobile}`);
@@ -90,16 +137,19 @@ export default function ResumeBuilder({ initialContent }) {
       parts.push(`💼 [LinkedIn](${contactInfo.linkedin})`);
     if (contactInfo.twitter) parts.push(`🐦 [Twitter](${contactInfo.twitter})`);
 
-    return parts.length > 0
-      ? `## <div align="center">${user.fullName}</div>
-        \n\n<div align="center">\n\n${parts.join(" | ")}\n\n</div>`
-      : "";
-  };
+    const header = `## <div align="center">${
+      user?.fullName || viewerName || "PippoAI Demo User"
+    }</div>`;
 
-  const getCombinedContent = () => {
-    const { summary, skills, experience, education, projects } = formValues;
+    return parts.length > 0
+      ? `${header}\n\n<div align="center">\n\n${parts.join(" | ")}\n\n</div>`
+      : header;
+  }, [user?.fullName, viewerName]);
+
+  const getCombinedContent = useCallback((values) => {
+    const { summary, skills, experience, education, projects } = values;
     return [
-      getContactMarkdown(),
+      getContactMarkdown(values),
       summary && `## Professional Summary\n\n${summary}`,
       skills && `## Skills\n\n${skills}`,
       entriesToMarkdown(experience, "Work Experience"),
@@ -108,14 +158,24 @@ export default function ResumeBuilder({ initialContent }) {
     ]
       .filter(Boolean)
       .join("\n\n");
-  };
+  }, [getContactMarkdown]);
 
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generatePDF = async () => {
+    if (isDemoMode) {
+      toast.error(DEMO_READONLY_MESSAGE);
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const element = document.getElementById("resume-pdf");
+      if (!element) {
+        toast.error("Resume export is unavailable right now");
+        return;
+      }
+
       const opt = {
         margin: [15, 15],
         filename: "resume.pdf",
@@ -172,18 +232,91 @@ export default function ResumeBuilder({ initialContent }) {
     }
   };
 
-  const onSubmit = async (data) => {
-    try {
-      const formattedContent = previewContent
-        .replace(/\n/g, "\n") // Normalize newlines
-        .replace(/\n\s*\n/g, "\n\n") // Normalize multiple newlines to double newlines
-        .trim();
-
-      console.log(previewContent, formattedContent);
-      await saveResumeFn(previewContent);
-    } catch (error) {
-      console.error("Save error:", error);
+  const saveMarkdownContent = async () => {
+    if (isDemoMode) {
+      toast.error(DEMO_READONLY_MESSAGE);
+      return;
     }
+
+    const formattedContent = (previewContent || "")
+      .replace(/\n/g, "\n")
+      .replace(/\n\s*\n/g, "\n\n")
+      .trim();
+
+    if (!formattedContent) {
+      toast.error("Resume content is empty");
+      return;
+    }
+
+    const savedResume = await saveResumeFn(formattedContent);
+    if (savedResume) {
+      setSavedContent(formattedContent);
+    }
+  };
+
+  const saveFormContent = async (values) => {
+    const combinedContent = getCombinedContent(values).trim();
+
+    if (!combinedContent) {
+      toast.error("Resume content is empty");
+      return;
+    }
+
+    setPreviewContent(combinedContent);
+
+    const savedResume = await saveResumeFn(combinedContent);
+    if (savedResume) {
+      setSavedContent(combinedContent);
+      setIsUsingFormDraft(false);
+      setResumeMode("preview");
+      setActiveTab("preview");
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (isDemoMode) {
+      toast.error(DEMO_READONLY_MESSAGE);
+      return;
+    }
+
+    if (activeTab === "edit" && isUsingFormDraft) {
+      handleSubmit(saveFormContent)();
+      return;
+    }
+
+    saveMarkdownContent();
+  };
+
+  const startFormDraft = () => {
+    if (
+      !window.confirm(
+        "Starting a new form draft will not import your existing markdown resume. Continue?"
+      )
+    ) {
+      return;
+    }
+
+    reset(emptyResumeValues);
+    setPreviewContent("");
+    setIsUsingFormDraft(true);
+    setResumeMode("preview");
+    setActiveTab("edit");
+  };
+
+  const cancelFormDraft = () => {
+    if (
+      !window.confirm(
+        "Discard this form draft and return to your saved markdown resume?"
+      )
+    ) {
+      return;
+    }
+
+    reset(emptyResumeValues);
+    setPreviewContent(savedContent || "");
+    setIsUsingFormDraft(false);
+    setResumeMode("preview");
+    setActiveTab("preview");
   };
 
   return (
@@ -193,12 +326,17 @@ export default function ResumeBuilder({ initialContent }) {
           Resume Builder
         </h1>
         <div className="space-x-2">
+          {hasFormDraftFromStoredResume && !isDemoMode && (
+            <Button type="button" variant="outline" onClick={cancelFormDraft}>
+              Cancel Draft
+            </Button>
+          )}
           <Button
             variant="destructive"
-            onClick={handleSubmit(onSubmit)}
+            onClick={handleSaveClick}
             disabled={isSaving}
           >
-            {isSaving ? (
+            {isSaving && !isDemoMode ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...
@@ -206,12 +344,12 @@ export default function ResumeBuilder({ initialContent }) {
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Save
+                {isDemoMode ? "Sign In To Save" : "Save"}
               </>
             )}
           </Button>
-          <Button onClick={generatePDF} disabled={isGenerating}>
-            {isGenerating ? (
+          <Button onClick={generatePDF} disabled={isGenerating && !isDemoMode}>
+            {isGenerating && !isDemoMode ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generating PDF...
@@ -219,190 +357,304 @@ export default function ResumeBuilder({ initialContent }) {
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                Download PDF
+                {isDemoMode ? "Sign In To Export" : "Download PDF"}
               </>
             )}
           </Button>
         </div>
       </div>
 
+      {isDemoMode && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          You are previewing a sample resume. Editing, saving, AI upgrades, and
+          PDF export are disabled until you sign in.
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="edit">Form</TabsTrigger>
+          <TabsTrigger
+            value="edit"
+            disabled={isDemoMode || (hasStoredResume && !isUsingFormDraft)}
+          >
+            Form
+          </TabsTrigger>
           <TabsTrigger value="preview">Markdown</TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Contact Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <Input
-                    {...register("contactInfo.email")}
-                    type="email"
-                    placeholder="your@email.com"
-                    error={errors.contactInfo?.email}
-                  />
-                  {errors.contactInfo?.email && (
-                    <p className="text-sm text-red-500">
-                      {errors.contactInfo.email.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Mobile Number</label>
-                  <Input
-                    {...register("contactInfo.mobile")}
-                    type="tel"
-                    placeholder="+1 234 567 8900"
-                  />
-                  {errors.contactInfo?.mobile && (
-                    <p className="text-sm text-red-500">
-                      {errors.contactInfo.mobile.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">LinkedIn URL</label>
-                  <Input
-                    {...register("contactInfo.linkedin")}
-                    type="url"
-                    placeholder="https://linkedin.com/in/your-profile"
-                  />
-                  {errors.contactInfo?.linkedin && (
-                    <p className="text-sm text-red-500">
-                      {errors.contactInfo.linkedin.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Twitter/X Profile
-                  </label>
-                  <Input
-                    {...register("contactInfo.twitter")}
-                    type="url"
-                    placeholder="https://twitter.com/your-handle"
-                  />
-                  {errors.contactInfo?.twitter && (
-                    <p className="text-sm text-red-500">
-                      {errors.contactInfo.twitter.message}
-                    </p>
-                  )}
-                </div>
+          {hasFormDraftFromStoredResume && (
+            <div className="mb-4 flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-medium">New form draft in progress</p>
+                <p className="text-sm text-muted-foreground">
+                  This draft is separate from your saved markdown resume until
+                  you save it.
+                </p>
               </div>
             </div>
+          )}
+          <form onSubmit={handleSubmit(saveFormContent)} className="space-y-6">
+            <fieldset disabled={isDemoMode} className="space-y-8">
+              <Card className="border border-border/60 bg-muted/20">
+                <CardHeader>
+                  <CardTitle>Resume Structure</CardTitle>
+                  <CardDescription>
+                    Fill this out from top to bottom: add your contact basics,
+                    summarize your story, then support it with experience,
+                    education, and projects.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="font-medium text-foreground">1. Identity</p>
+                    <p>Email, phone, and profile links.</p>
+                  </div>
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="font-medium text-foreground">2. Positioning</p>
+                    <p>Summary and skills that match your target role.</p>
+                  </div>
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="font-medium text-foreground">3. Evidence</p>
+                    <p>Experience, education, and project wins.</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Summary */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Professional Summary</h3>
-              <Controller
-                name="summary"
-                control={control}
-                render={({ field }) => (
-                  <Textarea
-                    {...field}
-                    className="h-32"
-                    placeholder="Write a compelling professional summary..."
-                    error={errors.summary}
-                  />
-                )}
-              />
-              {errors.summary && (
-                <p className="text-sm text-red-500">{errors.summary.message}</p>
-              )}
-            </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Information</CardTitle>
+                  <CardDescription>
+                    These details appear at the top of your resume and help
+                    recruiters contact you quickly.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="resume-email">Email</Label>
+                    <Input
+                      id="resume-email"
+                      {...register("contactInfo.email")}
+                      type="email"
+                      placeholder="your@email.com"
+                      error={errors.contactInfo?.email}
+                    />
+                    {errors.contactInfo?.email && (
+                      <p className="text-sm text-red-500">
+                        {errors.contactInfo.email.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="resume-mobile">Mobile Number</Label>
+                    <Input
+                      id="resume-mobile"
+                      {...register("contactInfo.mobile")}
+                      type="tel"
+                      placeholder="+1 234 567 8900"
+                    />
+                    {errors.contactInfo?.mobile && (
+                      <p className="text-sm text-red-500">
+                        {errors.contactInfo.mobile.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="resume-linkedin">LinkedIn URL</Label>
+                    <Input
+                      id="resume-linkedin"
+                      {...register("contactInfo.linkedin")}
+                      type="url"
+                      placeholder="https://linkedin.com/in/your-profile"
+                    />
+                    {errors.contactInfo?.linkedin && (
+                      <p className="text-sm text-red-500">
+                        {errors.contactInfo.linkedin.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="resume-twitter">Twitter/X Profile</Label>
+                    <Input
+                      id="resume-twitter"
+                      {...register("contactInfo.twitter")}
+                      type="url"
+                      placeholder="https://twitter.com/your-handle"
+                    />
+                    {errors.contactInfo?.twitter && (
+                      <p className="text-sm text-red-500">
+                        {errors.contactInfo.twitter.message}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Skills */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Skills</h3>
-              <Controller
-                name="skills"
-                control={control}
-                render={({ field }) => (
-                  <Textarea
-                    {...field}
-                    className="h-32"
-                    placeholder="List your key skills..."
-                    error={errors.skills}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Professional Summary</CardTitle>
+                  <CardDescription>
+                    Write 3-5 lines about your experience, strongest strengths,
+                    and the type of work you want next.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Controller
+                    name="summary"
+                    control={control}
+                    render={({ field }) => (
+                      <Textarea
+                        {...field}
+                        className="h-32"
+                        placeholder="Example: Product-minded frontend developer with 3+ years building polished web experiences, scalable UI systems, and AI-assisted workflows..."
+                        error={errors.summary}
+                      />
+                    )}
                   />
-                )}
-              />
-              {errors.skills && (
-                <p className="text-sm text-red-500">{errors.skills.message}</p>
-              )}
-            </div>
+                  {errors.summary && (
+                    <p className="text-sm text-red-500">
+                      {errors.summary.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Experience */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Work Experience</h3>
-              <Controller
-                name="experience"
-                control={control}
-                render={({ field }) => (
-                  <EntryForm
-                    type="Experience"
-                    entries={field.value}
-                    onChange={field.onChange}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Skills</CardTitle>
+                  <CardDescription>
+                    Group your most relevant tools, technologies, and domain
+                    strengths. Keep it scannable.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Controller
+                    name="skills"
+                    control={control}
+                    render={({ field }) => (
+                      <Textarea
+                        {...field}
+                        className="h-28"
+                        placeholder="Example: React, Next.js, TypeScript, Prisma, PostgreSQL, REST APIs, Tailwind CSS"
+                        error={errors.skills}
+                      />
+                    )}
                   />
-                )}
-              />
-              {errors.experience && (
-                <p className="text-sm text-red-500">
-                  {errors.experience.message}
-                </p>
-              )}
-            </div>
+                  <p className="text-sm text-muted-foreground">
+                    Tip: prioritize the skills most relevant to the job you are
+                    applying for.
+                  </p>
+                  {errors.skills && (
+                    <p className="text-sm text-red-500">
+                      {errors.skills.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Education */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Education</h3>
-              <Controller
-                name="education"
-                control={control}
-                render={({ field }) => (
-                  <EntryForm
-                    type="Education"
-                    entries={field.value}
-                    onChange={field.onChange}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Work Experience</CardTitle>
+                  <CardDescription>
+                    Add roles that show impact. Focus on results, ownership, and
+                    measurable improvements where possible.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Controller
+                    name="experience"
+                    control={control}
+                    render={({ field }) => (
+                      <EntryForm
+                        type="Experience"
+                        entries={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
                   />
-                )}
-              />
-              {errors.education && (
-                <p className="text-sm text-red-500">
-                  {errors.education.message}
-                </p>
-              )}
-            </div>
+                  {errors.experience && (
+                    <p className="text-sm text-red-500">
+                      {errors.experience.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Projects */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Projects</h3>
-              <Controller
-                name="projects"
-                control={control}
-                render={({ field }) => (
-                  <EntryForm
-                    type="Project"
-                    entries={field.value}
-                    onChange={field.onChange}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Education</CardTitle>
+                  <CardDescription>
+                    Include degrees, certifications, or formal programs that
+                    strengthen your profile.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Controller
+                    name="education"
+                    control={control}
+                    render={({ field }) => (
+                      <EntryForm
+                        type="Education"
+                        entries={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
                   />
-                )}
-              />
-              {errors.projects && (
-                <p className="text-sm text-red-500">
-                  {errors.projects.message}
-                </p>
-              )}
-            </div>
+                  {errors.education && (
+                    <p className="text-sm text-red-500">
+                      {errors.education.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Projects</CardTitle>
+                  <CardDescription>
+                    Highlight practical work that proves your skills, especially
+                    if it matches your target role.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Controller
+                    name="projects"
+                    control={control}
+                    render={({ field }) => (
+                      <EntryForm
+                        type="Project"
+                        entries={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.projects && (
+                    <p className="text-sm text-red-500">
+                      {errors.projects.message}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </fieldset>
           </form>
         </TabsContent>
 
         <TabsContent value="preview">
-          {activeTab === "preview" && (
+          {hasStoredResume && !isDemoMode && !isUsingFormDraft && (
+            <div className="mb-3 flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-medium">Editing an existing resume</p>
+                <p className="text-sm text-muted-foreground">
+                  Markdown editing is enabled. Structured form mode starts a new
+                  draft and does not import your saved markdown automatically.
+                </p>
+              </div>
+              <Button type="button" variant="outline" onClick={startFormDraft}>
+                Start New Form Draft
+              </Button>
+            </div>
+          )}
+          {activeTab === "preview" && !isDemoMode && (
             <Button
               variant="link"
               type="button"
@@ -425,7 +677,7 @@ export default function ResumeBuilder({ initialContent }) {
             </Button>
           )}
 
-          {activeTab === "preview" && resumeMode !== "preview" && (
+          {activeTab === "preview" && !isDemoMode && resumeMode !== "preview" && (
             <div className="flex p-3 gap-2 items-center border-2 border-yellow-600 text-yellow-600 rounded mb-2">
               <AlertTriangle className="h-5 w-5" />
               <span className="text-sm">
@@ -436,20 +688,96 @@ export default function ResumeBuilder({ initialContent }) {
           <div className="border rounded-lg">
             <MDEditor
               value={previewContent}
-              onChange={setPreviewContent}
+              onChange={isDemoMode ? undefined : setPreviewContent}
               height={800}
-              preview={resumeMode}
+              preview={isDemoMode ? "preview" : resumeMode}
+              hideToolbar={isDemoMode}
             />
           </div>
-          <div className="hidden">
-            <div id="resume-pdf">
-              <MDEditor.Markdown
-                source={previewContent}
-                style={{
-                  background: "white",
-                  color: "black",
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed left-[-10000px] top-0 opacity-0"
+          >
+            <div
+              id="resume-pdf"
+              style={{
+                width: "794px",
+                padding: "48px",
+                background: "#ffffff",
+                color: "#111111",
+                fontFamily: "Inter, Arial, sans-serif",
+                lineHeight: 1.6,
+              }}
+            >
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => (
+                    <h1
+                      style={{
+                        textAlign: "center",
+                        fontSize: "32px",
+                        fontWeight: 700,
+                        margin: "0 0 16px",
+                      }}
+                    >
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2
+                      style={{
+                        fontSize: "20px",
+                        fontWeight: 700,
+                        margin: "28px 0 12px",
+                        paddingBottom: "6px",
+                        borderBottom: "1px solid #d1d5db",
+                      }}
+                    >
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3
+                      style={{
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        margin: "18px 0 6px",
+                      }}
+                    >
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children }) => (
+                    <p style={{ margin: "0 0 12px", whiteSpace: "pre-wrap" }}>
+                      {children}
+                    </p>
+                  ),
+                  ul: ({ children }) => (
+                    <ul style={{ margin: "0 0 16px 20px", padding: 0 }}>
+                      {children}
+                    </ul>
+                  ),
+                  li: ({ children }) => (
+                    <li style={{ marginBottom: "8px" }}>{children}</li>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} style={{ color: "#2563eb" }}>
+                      {children}
+                    </a>
+                  ),
+                  hr: () => (
+                    <hr
+                      style={{
+                        border: 0,
+                        borderTop: "1px solid #d1d5db",
+                        margin: "24px 0",
+                      }}
+                    />
+                  ),
                 }}
-              />
+              >
+                {exportMarkdown(previewContent)}
+              </ReactMarkdown>
             </div>
           </div>
         </TabsContent>

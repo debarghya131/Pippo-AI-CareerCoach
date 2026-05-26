@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+const optionalTrimmedUrl = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : trimmed;
+  },
+  z.string().url("Please enter a valid URL").optional()
+);
+
 export const onboardingSchema = z.object({
   industry: z.string({
     required_error: "Please select an industry",
@@ -30,8 +39,8 @@ export const onboardingSchema = z.object({
 export const contactSchema = z.object({
   email: z.string().email("Invalid email address"),
   mobile: z.string().optional(),
-  linkedin: z.string().optional(),
-  twitter: z.string().optional(),
+  linkedin: optionalTrimmedUrl,
+  twitter: optionalTrimmedUrl,
 });
 
 export const entrySchema = z

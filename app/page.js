@@ -4,10 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowRight,
-  Trophy,
-  Target,
-  Sparkles,
-  CheckCircle2,
 } from "lucide-react";
 import HeroSection from "@/components/hero";
 import {
@@ -21,14 +17,22 @@ import { features } from "@/data/features";
 import { testimonial } from "@/data/testimonial";
 import { faqs } from "@/data/faqs";
 import { howItWorks } from "@/data/howItWorks";
+import { getViewerContext } from "@/lib/demo-server";
+import { SignUpButton } from "@clerk/nextjs";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId, isDemoMode } = await getViewerContext();
+  const dashboardHref = isDemoMode ? "/demo/exit?next=/dashboard" : "/dashboard";
+
   return (
     <>
       <div className="grid-background"></div>
 
       {/* Hero Section */}
-      <HeroSection />
+      <HeroSection
+        isAuthenticated={!!userId}
+        dashboardHref={dashboardHref}
+      />
 
       {/* Features Section */}
       <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
@@ -195,15 +199,29 @@ export default function LandingPage() {
               Join thousands of professionals who are advancing their careers
               with AI-powered guidance.
             </p>
-            <Link href="/dashboard" passHref>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="h-11 mt-5 animate-bounce"
-              >
-                Start Your Journey Today <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            {userId ? (
+              <Link href={dashboardHref} passHref>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-11 mt-5 animate-bounce"
+                >
+                  Start Your Journey Today{" "}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <SignUpButton forceRedirectUrl={dashboardHref}>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-11 mt-5 animate-bounce"
+                >
+                  Start Your Journey Today{" "}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </SignUpButton>
+            )}
           </div>
         </div>
       </section>
