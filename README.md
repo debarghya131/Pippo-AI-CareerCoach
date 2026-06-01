@@ -7,7 +7,7 @@ PippoAI helps users build resumes, generate cover letters, practice interviews, 
 Please check **Watch Demo** first to explore PippoAI in read-only demo mode before signing in.
 
 <p>
-  <a href="https://pippoai.debarghya.org/demo/start"><img src="public/watch-demo-button.svg" alt="Watch Demo" align="middle" /></a> 👈
+  <a href="https://pippoai.debarghya.org/demo/start"><img src="public/watch-demo-button.svg" alt="Watch Demo" align="middle" /></a> 👈 Click Here
 </p>
 
  Live link  : https://pippoai.debarghya.org
